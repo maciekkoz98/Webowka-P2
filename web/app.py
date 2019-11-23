@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from os import getenv
 import datetime
 import redis
+import hashlib
 
 load_dotenv(verbose=True)
 
@@ -20,6 +21,8 @@ SESSION_TIME = int(getenv("SESSION_TIME"))
 
 @app.route('/')
 def index():
+    red = redis.Redis(host="redis", port=6379, db=0)
+    red.set("Jacek", "9f05d493a1dfa97972928cd617798090dc0e2465f044d01fc2d9dcbe749ea2a1")  
     session_id = request.cookies.get('session_id')
     response = redirect("/list" if session_id else "/login")
     return response
@@ -27,7 +30,8 @@ def index():
 
 @app.route('/list')
 def files():
-    return
+    return f"""{HTML}
+    <h1> Logged in</h1>"""
 
 
 @app.route('/login')
@@ -45,14 +49,16 @@ def login():
 def auth():
     redis_instance = redis.Redis(host="redis", port=6379, db=0)
     username = request.form.get('username')
-    passwd = request.form.get('passwd')
+    passwd = request.form.get('passwd').encode()
+    passwd =  hashlib.sha256(passwd).hexdigest()
 
     response = make_response('', 303)
     if redis_instance.exists(username):
-        redis_pass = redis_instance.get(username)
+        redis_pass = redis_instance.get(username).decode()
         if passwd == redis_pass:
             session_id = str(uuid4())
             response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
+            response.headers["Location"] = "/list"
         else:
             response.set_cookie("session_id", "INVALIDATE", max_age=-1)
             response.headers["Location"] = "/login"
@@ -61,7 +67,6 @@ def auth():
         response.headers["Location"] = "/login"
 
     return response
-
 
 def redirect(location):
     responce = make_response('', 303)

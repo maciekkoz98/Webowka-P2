@@ -1,8 +1,17 @@
 version: "3.7"
 
 services:
+  nginx:
+    image: chaberb/nginx-ssl
+    depends_on:
+      - web
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx-myconf.conf:/etc/nginx/nginx.conf
+
   web:
-    build: 
+    build:
       context: web
       dockerfile: Dockerfile
     volumes:
@@ -11,14 +20,8 @@ services:
       - "5000:5000"
     depends_on:
       - redis
-    
 
   redis:
-    build:
-      context: redis_mine
-      dockerfile: Dockerfile
+    image: redis
     ports:
       - "6379:6379"
-  
-
-
