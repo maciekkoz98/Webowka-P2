@@ -1,5 +1,5 @@
 ## Setup
-Before building the project with docker please rememeber to map site addresses with localhost.  
+Before building the project with docker please rememeber to map site addresses to localhost.  
 On MS Windows go under `C:/Windows/System32/drivers/etc` and edit `hosts` file.  
 You should add two lines:  
 `127.0.0.1 web.company.com`  
