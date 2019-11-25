@@ -11,14 +11,7 @@ load_dotenv(verbose=True)
 app = Flask(__name__)
 JWT_SECRET = getenv('JWT_SECRET')
 
-
-HTML = """<!doctype html>
-<head>
-    <title>Fileshare</title>
-    <meta charset="utf-8"/>
-</head>"""
-
-redis_instance = redis.Redis(host="redis2", port=6379, db=0)
+redis_db = redis.Redis(host="redis2", port=6379, db=0)
 
 
 @app.route('/upload', methods=['POST'])
@@ -38,8 +31,11 @@ def upload():
             else ('<h1>Fileshare</h1> Invalid token provided', 401)
 
     # zapisz do redis
-    redis_instance.lpush("files", file.read())
-    return redirect(f"{callback}?fname={file.name}")
+    redis_db.rpush("files", file.read())
+    filename = file.filename
+    redis_db.rpush("filenames", filename)
+    file.close()
+    return redirect(f"{callback}?fname={filename}")
 
 
 @app.route('/download/<fid>')
@@ -49,6 +45,19 @@ def download(fid):
         return
 
     return
+
+
+@app.route('/files')
+def getFileList():
+    token = request.args.get('token')
+    if check_token(token):
+        response = make_response('', 303)
+        files = redis_db.lrange("filenames", 0, redis_db.llen("filenames"))
+        response.set_cookie("filelist", files, max_age=10)
+        response.headers["Location"] = "https://web.company.com/list"
+        return response
+    else:
+        return ('<h1>Fileshare</h1> Invalid token provided', 401)
 
 
 def check_token(t):

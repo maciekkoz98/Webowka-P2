@@ -1,0 +1,23 @@
+<!doctype html>
+
+<head>
+    <title>Fileshare</title>
+    <meta charset="utf-8" />
+</head>
+
+<h1>Fileshare</h1>
+<h2>Lista załadowanych plików</h2>
+{% block content %}
+<ul>
+    {% for filename in filelist %}
+        <li><a href="#">{{filename}}</a></li>
+    {% endfor %}
+</ul>
+{% endblock %}
+<h2>Prześlij plik</h2>
+<form action="{{FILE}}/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" />
+    <input type="hidden" name="token" value="{{upload_token}}" />
+    <input type="hidden" name="callback" value="{{WEB}}/callback" />
+    <input type="submit" />
+</form>

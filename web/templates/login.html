@@ -1,0 +1,14 @@
+<!doctype html>
+
+<head>
+    <title>Fileshare</title>
+    <meta charset="utf-8" />
+</head>
+
+<h1>Zaloguj się</h1>
+<h2>{{error_message}}</h2>
+<form action="/auth" method="POST">
+    <input type="text" name="username" placeholder="Wprowadź login" />
+    <input type="password" name="passwd" placeholder="Wprowadź hasło" />
+    <input type="submit" />
+</form>

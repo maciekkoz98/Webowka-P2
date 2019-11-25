@@ -3,6 +3,7 @@ from uuid import uuid4
 from flask import Flask
 from flask import request
 from flask import make_response
+from flask import render_template
 from dotenv import load_dotenv
 from os import getenv
 import datetime
@@ -10,13 +11,6 @@ import redis
 import hashlib
 
 load_dotenv(verbose=True)
-
-
-HTML = """<!doctype html>
-<head>
-    <title>Fileshare</title>
-    <meta charset="utf-8"/>
-</head>"""
 
 app = Flask(__name__, static_url_path="/static")
 FILE = getenv("FILESHARE")
@@ -26,6 +20,7 @@ JWT_SESSION_TIME = int(getenv("JWT_SESSION_TIME"))
 JWT_SECRET = getenv("JWT_SECRET")
 
 redis_instance = redis.Redis(host="redis1", port=6379, db=0)
+fileslist = []
 
 
 @app.route('/')
@@ -45,14 +40,7 @@ def login():
         error_message = "Podany login jest nieprawidłowy"
     elif error == "Invalid passwd":
         error_message = "Podane hasło jest nieprawidłowe"
-    return f"""{HTML}
-        <h1>Zaloguj się</h1>
-        <h2>{error_message}</h2>
-        <form action="/auth" method="POST">
-            <input type="text" name="username" placeholder="Wprowadź login" />
-            <input type="password" name="passwd" placeholder="Wprowadź hasło" />
-            <input type="submit" />
-        </form>"""
+    return render_template("login.html", error_message=error_message)
 
 
 @app.route('/auth', methods=['POST'])
@@ -83,25 +71,27 @@ def files():
     session_id_redis = redis_instance.get("session_id")
     if session_id == session_id_redis.decode():
         upload_token = create_upl_token().decode('ascii')
-        return f"""{HTML}
-        <h1>Fileshare</h1>
-        <h2>Lista załadowanych plików</h2>
-
-        <h2>Prześlij plik</h2>
-        <form action="{FILE}/upload" method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" />
-            <input type="hidden" name="token" value="{upload_token}" />
-            <input type="hidden" name="callback" value="{WEB}/callback" />
-            <input type="submit" />
-        </form> """
+        filelist = request.cookies.get('filelist')
+        if filelist is None:
+            filelist = []
+        return render_template("list.html", filelist=fileslist, FILE=FILE, upload_token=upload_token, WEB=WEB)
     else:
         return redirect("/login")
 
 
 @app.route('/callback')
 def callback():
-    fname = request.args.get("fname")
-    return (f"<h1>{fname}</h1>", 200)
+    session_id = request.cookies.get("session_id")
+    error = request.args.get("error")
+    filename = request.args.get("fname")
+    if not session_id:
+        return redirect("/login")
+
+    if error:
+        return f"<h1>APP</h1> Upload failed: {error}", 400
+
+    fileslist.append(filename)
+    return render_template("callback.html", filename=filename)
 
 
 def redirect(location):
