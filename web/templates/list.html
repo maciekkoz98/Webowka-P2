@@ -10,7 +10,7 @@
 {% block content %}
 <ul>
     {% for filename in filelist %}
-        <li><a href="#">{{filename}}</a></li>
+    <li><a href="{{FILE}}/download/{{filename}}?token={{download_token}}">{{filename}}</a></li>
     {% endfor %}
 </ul>
 {% endblock %}

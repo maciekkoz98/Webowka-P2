@@ -26,7 +26,7 @@ fileslist = []
 @app.route('/')
 def index():
     redis_instance.set(
-        "Jacek", "9f05d493a1dfa97972928cd617798090dc0e2465f044d01fc2d9dcbe749ea2a1")
+        "Jack", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
     session_id = request.cookies.get('session_id')
     response = redirect("/list" if session_id else "/login")
     return response
@@ -70,11 +70,14 @@ def files():
     session_id = request.cookies.get('session_id')
     session_id_redis = redis_instance.get("session_id")
     if session_id == session_id_redis.decode():
-        upload_token = create_upl_token().decode('ascii')
+        upload_token = create_token().decode('ascii')
+        download_token = create_token().decode('ascii')
         filelist = request.cookies.get('filelist')
         if filelist is None:
             filelist = []
-        return render_template("list.html", filelist=fileslist, FILE=FILE, upload_token=upload_token, WEB=WEB)
+        return render_template("list.html", filelist=fileslist,
+                               FILE=FILE, upload_token=upload_token,
+                               download_token=download_token, WEB=WEB)
     else:
         return redirect("/login")
 
@@ -97,7 +100,7 @@ def callback():
 @app.route('/logout')
 def logout():
     response = redirect('/login')
-    redis_instance.delete("session_id")  
+    redis_instance.delete("session_id")
     response.set_cookie("session_id", "INVALIDATE", max_age=-1)
     return response
 
@@ -108,11 +111,6 @@ def redirect(location):
     return responce
 
 
-def create_upl_token():
+def create_token():
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
     return encode({"iss": "fileshare.company.com", "exp": expiration}, JWT_SECRET, "HS256")
-
-
-def creat_downl_token():
-    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return encode({"iss": "web.company.com", "exp": expiration}, JWT_SECRET, "HS256")

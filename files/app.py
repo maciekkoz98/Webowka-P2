@@ -2,6 +2,7 @@ from jwt import decode, InvalidTokenError
 from flask import Flask
 from flask import request
 from flask import make_response
+from flask import render_template
 from os import getenv
 from dotenv import load_dotenv
 import redis
@@ -30,7 +31,6 @@ def upload():
         return redirect(f"{callback}?error=Invalid+token") if callback \
             else ('<h1>Fileshare</h1> Invalid token provided', 401)
 
-    # zapisz do redis
     redis_db.rpush("files", file.read())
     filename = file.filename
     redis_db.rpush("filenames", filename)
@@ -42,9 +42,22 @@ def upload():
 def download(fid):
     token = request.args.get('token')
     if len(fid) == 0:
-        return
+        return (f'<h1>Fileshare</h1> No file specified', 404)
+    if token is None:
+        return ('<h1>Fileshare</h1>No token provided', 401)
+    if not check_token(token):
+        return('<h1>Fileshare</h1>Invalid token provided', 401)
 
-    return
+    index = 0
+    for name in redis_db.lrange("filenames", 0, redis_db.llen("filenames")):
+        if name.decode() == fid:
+            break
+        index += 1
+
+    response = make_response(redis_db.lindex("files", index), 200)
+    response.headers['Content-type'] = "multipart/form-data"
+    return response
+    # return render_template("try.html", filelist=redis_db.lrange("filenames", 0, redis_db.llen("filenames")))
 
 
 @app.route('/files')
@@ -57,7 +70,7 @@ def getFileList():
         response.headers["Location"] = "https://web.company.com/list"
         return response
     else:
-        return ('<h1>Fileshare</h1> Invalid token provided', 401)
+        return (f'<h1>Fileshare</h1> Invalid token provided', 401)
 
 
 def check_token(t):
@@ -69,6 +82,6 @@ def check_token(t):
 
 
 def redirect(location):
-    responce = make_response('', 303)
-    responce.headers["Location"] = location
-    return responce
+    response = make_response('', 303)
+    response.headers["Location"] = location
+    return response
