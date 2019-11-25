@@ -84,7 +84,7 @@ def callback():
     session_id = request.cookies.get("session_id")
     error = request.args.get("error")
     filename = request.args.get("fname")
-    if not session_id:
+    if session_id != redis_instance.get("session_id").decode():
         return redirect("/login")
 
     if error:
@@ -92,6 +92,14 @@ def callback():
 
     fileslist.append(filename)
     return render_template("callback.html", filename=filename)
+
+
+@app.route('/logout')
+def logout():
+    response = redirect('/login')
+    redis_instance.delete("session_id")  
+    response.set_cookie("session_id", "INVALIDATE", max_age=-1)
+    return response
 
 
 def redirect(location):
