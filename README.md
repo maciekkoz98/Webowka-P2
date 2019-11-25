@@ -10,4 +10,4 @@ To run the aplication please use command:
 
 ## Usage
 In order to log in you need to use:  
-username: `Jacek` password: `Krol`
+username: `Jack` password: `gwiazdor`
