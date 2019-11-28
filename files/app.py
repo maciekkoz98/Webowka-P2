@@ -58,7 +58,6 @@ def download(fid):
     response = make_response(redis_db.lindex("files", index), 200)
     response.headers['Content-type'] = "multipart/form-data"
     return response
-    # return render_template("try.html", filelist=redis_db.lrange("filenames", 0, redis_db.llen("filenames")))
 
 
 @app.route('/filelist', methods=['POST'])
@@ -67,9 +66,9 @@ def getFileList():
     token = token_json['token']
     if check_token(token):
         filelist = redis_db.lrange("filenames", 0, redis_db.llen("filenames"))
-        # for i in range(0, len(filelist)):
-        #     filelist[i].decode()
-        #     print(filelist[i], flush=True)
+        for i in range(0, len(filelist)):
+            filelist[i] = filelist[i].decode()
+            print(filelist[i], flush=True)
         body = {
             "files": filelist
         }
