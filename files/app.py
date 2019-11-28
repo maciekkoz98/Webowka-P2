@@ -3,6 +3,7 @@ from flask import Flask
 from flask import request
 from flask import make_response
 from flask import render_template
+from flask import jsonify
 from os import getenv
 from dotenv import load_dotenv
 import redis
@@ -57,18 +58,21 @@ def download(fid):
     response = make_response(redis_db.lindex("files", index), 200)
     response.headers['Content-type'] = "multipart/form-data"
     return response
-    # return render_template("try.html", filelist=redis_db.lrange("filenames", 0, redis_db.llen("filenames")))
 
 
-@app.route('/files')
+@app.route('/filelist', methods=['POST'])
 def getFileList():
-    token = request.args.get('token')
+    token_json = request.get_json()
+    token = token_json['token']
     if check_token(token):
-        response = make_response('', 303)
-        files = redis_db.lrange("filenames", 0, redis_db.llen("filenames"))
-        response.set_cookie("filelist", files, max_age=10)
-        response.headers["Location"] = "https://web.company.com/list"
-        return response
+        filelist = redis_db.lrange("filenames", 0, redis_db.llen("filenames"))
+        for i in range(0, len(filelist)):
+            filelist[i] = filelist[i].decode()
+            print(filelist[i], flush=True)
+        body = {
+            "files": filelist
+        }
+        return jsonify(body)
     else:
         return (f'<h1>Fileshare</h1> Invalid token provided', 401)
 

@@ -9,6 +9,7 @@ from os import getenv
 import datetime
 import redis
 import hashlib
+import requests
 
 load_dotenv(verbose=True)
 
@@ -20,13 +21,12 @@ JWT_SESSION_TIME = int(getenv("JWT_SESSION_TIME"))
 JWT_SECRET = getenv("JWT_SECRET")
 
 redis_instance = redis.Redis(host="redis1", port=6379, db=0)
-fileslist = []
+redis_instance.set(
+    "Jack", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
 
 
 @app.route('/')
 def index():
-    redis_instance.set(
-        "Jack", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
     session_id = request.cookies.get('session_id')
     response = redirect("/list" if session_id else "/login")
     return response
@@ -70,11 +70,13 @@ def files():
     session_id = request.cookies.get('session_id')
     session_id_redis = redis_instance.get("session_id")
     if session_id == session_id_redis.decode():
-        upload_token = create_token().decode('ascii')
-        download_token = create_token().decode('ascii')
-        filelist = request.cookies.get('filelist')
-        if filelist is None:
-            filelist = []
+        upload_token = create_token(JWT_SESSION_TIME).decode('ascii')
+        download_token = create_token(JWT_SESSION_TIME).decode('ascii')
+        list_token = create_token(10).decode('ascii')
+        print(list_token, flush=True)
+        filelist_json = requests.post(
+            "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
+        fileslist = filelist_json['files']
         return render_template("list.html", filelist=fileslist,
                                FILE=FILE, upload_token=upload_token,
                                download_token=download_token, WEB=WEB)
@@ -93,7 +95,6 @@ def callback():
     if error:
         return f"<h1>APP</h1> Upload failed: {error}", 400
 
-    fileslist.append(filename)
     return render_template("callback.html", filename=filename)
 
 
@@ -111,6 +112,6 @@ def redirect(location):
     return responce
 
 
-def create_token():
-    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
+def create_token(time):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
     return encode({"iss": "fileshare.company.com", "exp": expiration}, JWT_SECRET, "HS256")
