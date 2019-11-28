@@ -73,7 +73,6 @@ def files():
         upload_token = create_token(JWT_SESSION_TIME).decode('ascii')
         download_token = create_token(JWT_SESSION_TIME).decode('ascii')
         list_token = create_token(10).decode('ascii')
-        print(list_token, flush=True)
         filelist_json = requests.post(
             "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
         fileslist = filelist_json['files']
