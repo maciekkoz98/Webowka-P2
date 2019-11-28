@@ -3,23 +3,27 @@
 <head>
     <title>Fileshare</title>
     <meta charset="utf-8" />
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Krub&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
 </head>
 
 <h1>Fileshare</h1>
-<h2>Lista załadowanych plików</h2>
-{% block content %}
-<ul>
-    {% for filename in filelist %}
-    <li><a href="{{FILE}}/download/{{filename}}?token={{download_token}}">{{filename}}</a></li>
-    {% endfor %}
-</ul>
-{% endblock %}
-<h2>Prześlij plik</h2>
+<div class="list">
+    <h2>Lista załadowanych plików:</h2>
+    {% block content %}
+    <ul>
+        {% for filename in filelist %}
+        <li><a href="{{FILE}}/download/{{filename}}?token={{download_token}}">{{filename}}</a></li>
+        {% endfor %}
+    </ul>
+    {% endblock %}
+</div>
 <form action="{{FILE}}/upload" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" />
+    <h2>Prześlij plik:</h2>
+    <input type="file" name="file" required/>
     <input type="hidden" name="token" value="{{upload_token}}" />
     <input type="hidden" name="callback" value="{{WEB}}/callback" />
     <input type="submit" />
 </form>
 <br>
-<a href="/logout"><button>Wyloguj się</button></a>
+<center><a href="/logout"><button>Wyloguj się</button></a></center>

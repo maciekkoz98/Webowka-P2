@@ -3,9 +3,12 @@
 <head>
     <title>Fileshare</title>
     <meta charset="utf-8" />
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Krub&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
 </head>
 
 <h1>Fileshare</h1>
-
-<h2>Udało się załadować plik {{filename}}</h2>
-<a href="/list"><button>Powrót</button></a>
+<div class="list">
+    <h2>Udało się załadować plik {{filename}}</h2>
+    <center><a href="/list"><button>Powrót</button></a></center>
+</div>
