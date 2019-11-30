@@ -68,7 +68,6 @@ def getFileList():
         filelist = redis_db.lrange("filenames", 0, redis_db.llen("filenames"))
         for i in range(0, len(filelist)):
             filelist[i] = filelist[i].decode()
-            print(filelist[i], flush=True)
         body = {
             "files": filelist
         }
