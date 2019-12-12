@@ -4,6 +4,7 @@ services:
   nginx:
     image: chaberb/nginx-ssl
     depends_on:
+      - api
       - web
       - files
     ports:
@@ -29,8 +30,22 @@ services:
     depends_on:
       - redis2
 
+  api:
+    build:
+      context: API
+      dockerfile: Dockerfile
+    volumes:
+      - ./API:/var/www/app
+    depends_on:
+      - redis3
+    ports:
+      - "5000:5000"
+
   redis1:
     image: redis
 
   redis2:
+    image: redis
+
+  redis3:
     image: redis

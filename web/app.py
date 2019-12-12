@@ -54,7 +54,7 @@ def auth():
         redis_pass = redis_instance.get(username).decode()
         if passwd == redis_pass:
             session_id = str(uuid4())
-            redis_instance.set("session_id", session_id)
+            redis_instance.set("session_id", username + " " + session_id)
             response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
             response.headers["Location"] = "/list"
         else:
@@ -68,19 +68,31 @@ def auth():
 @app.route('/list')
 def files():
     session_id = request.cookies.get('session_id')
-    session_id_redis = redis_instance.get("session_id")
-    if session_id == session_id_redis.decode():
+    session_id_user_redis = redis_instance.get(
+        "session_id").decode().split(" ")
+    session_id_redis = session_id_user_redis[1]
+    if session_id == session_id_redis:
         upload_token = create_token(JWT_SESSION_TIME).decode('ascii')
         download_token = create_token(JWT_SESSION_TIME).decode('ascii')
         list_token = create_token(10).decode('ascii')
         filelist_json = requests.post(
             "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
         fileslist = filelist_json['files']
-        return render_template("list.html", filelist=fileslist,
+        api_url = get_api_url(session_id_user_redis)
+        publications = requests.get(api_url).json()
+        publications = publications["publications"]
+        return render_template("list.html", filelist=fileslist, publications=publications,
                                FILE=FILE, upload_token=upload_token,
                                download_token=download_token, WEB=WEB)
     else:
         return redirect("/login")
+
+
+def get_api_url(session_id_user):
+    url = "http://api:5000/publications"
+    user = session_id_user[0]
+    password = redis_instance.get(user).decode()
+    return url + "?username=" + user + "&password=" + password
 
 
 @app.route('/callback')
@@ -88,13 +100,40 @@ def callback():
     session_id = request.cookies.get("session_id")
     error = request.args.get("error")
     filename = request.args.get("fname")
-    if session_id != redis_instance.get("session_id").decode():
+    redis_session = redis_instance.get("session_id").decode().split(" ")
+    redis_session = redis_session[1]
+    if session_id != redis_session:
         return redirect("/login")
 
     if error:
         return f"<h1>APP</h1> Upload failed: {error}", 400
 
     return render_template("callback.html", filename=filename)
+
+
+@app.route("/addPub", methods=["POST"])
+def add():
+    title = request.form.get("title")
+    author = request.form.get("author")
+    year = request.form.get("year")
+    publisher = request.form.get("publisher")
+    username = redis_instance.get("session_id").decode().split(" ")
+    username = username[0]
+    password = redis_instance.get(username).decode()
+    # TODO files link?
+    body = {
+        "title": title,
+        "author": author,
+        "year": year,
+        "publisher": publisher,
+        "username": username,
+        "password": password
+    }
+    answer = requests.post("http://api:5000/publications", json=body)
+    if (answer.status_code == 200):
+        return ('OK', 200)
+    else:
+        return ('nie ok', 400)
 
 
 @app.route('/logout')
