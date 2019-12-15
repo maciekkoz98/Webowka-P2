@@ -81,6 +81,8 @@ def files():
         api_url = get_api_url(session_id_user_redis)
         publications = requests.get(api_url).json()
         publications = publications["publications"]
+        # TODO prezentacja publikacji
+
         return render_template("list.html", filelist=fileslist, publications=publications,
                                FILE=FILE, upload_token=upload_token,
                                download_token=download_token, WEB=WEB)
@@ -120,7 +122,6 @@ def add():
     username = redis_instance.get("session_id").decode().split(" ")
     username = username[0]
     password = redis_instance.get(username).decode()
-    # TODO files link?
     body = {
         "title": title,
         "author": author,

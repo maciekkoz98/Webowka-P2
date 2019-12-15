@@ -18,6 +18,7 @@ redis_db = redis.Redis(host="redis2", port=6379, db=0)
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    # TODO refactor in order to work with API
     file = request.files.get('file')
     token = request.form.get("token")
     callback = request.form.get("callback")
