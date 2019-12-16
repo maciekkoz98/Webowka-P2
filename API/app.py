@@ -29,7 +29,7 @@ def handle_pubs():
             username = json['username']
             password = json['password']
             if username is None or password is None:
-                return('<h1>FilesApi</h1>No login data', 400)
+                return('<h1>FilesApi</h1>No login data', 401)
             title = json["title"]
             author = json["author"]
             publisher = json["publisher"]
@@ -52,7 +52,7 @@ def handle_pubs():
         username = request.args.get("username")
         password = request.args.get("password")
         if username == None or password == None:
-            return('<h1>FilesApi</h1>No login data', 400)
+            return('<h1>FilesApi</h1>No login data', 401)
         if redis_db.exists(username) and redis_db.get(username).decode() == password:
             publications = []
             links = Collection()
@@ -89,7 +89,7 @@ def post_pub(pub_id):
     username = request.form.get("username")
     password = request.form.get("password")
     if username is None or password is None:
-        return('<h1>FilesApi</h1>No login data', 400)
+        return('<h1>FilesApi</h1>No login data', 401)
     if redis_db.exists(username) and redis_db.get(username).decode() == password:
         pub_id = str(pub_id)
         file = request.files.get("file")
@@ -135,6 +135,8 @@ def delete_file(file_id):
     # TODO użytkownik i hasło musi być dodane w kliencie przy wysłaniu zapytania (?), maybe json(???)
     username = request.args.get("username")
     password = request.args.get("password")
+    if username is None or password is None:
+        return('<h1>FilesApi</h1>No login data', 401)
     if redis_db.exists(username) and redis_db.get(username).decode() == password:
         pub_id = request.args.get("pid")
         if not check_fid_pub(username, pub_id, file_id):
@@ -179,12 +181,34 @@ def check_fid_pub(username, pub_id, file_id):
 
 
 @app.route("/publications/delete/<pub_id>")
-def delete_publication():
+def delete_publication(pub_id):
     # TODO usuwanie publikacji z bazy
     username = request.args.get("username")
     password = request.args.get("password")
+    if username is None or password is None:
+        return('<h1>FilesApi</h1>No login data', 401)
     if redis_db.exists(username) and redis_db.get(username).decode() == password:
-        return
+        data = redis_db.get("publications:_+" + username + ":_+" + pub_id)
+        if data is None:
+            return ('<h1>FilesApi</h1>Publication not found', 404)
+        data = data.decode().split(":_+")
+        if len(data) > 5:
+            url = data[6] + "&username=" + username + "&password=" + password
+            ans = requests.get(url)
+            if ans.status_code == 400:
+                return("Error", 400)
+            elif ans.status_code == 404:
+                return("File not exists", 404)
+            elif ans.status_code == 401:
+                return("Logs", 401)
+        redis_db.delete("publications:_+" + username + ":_+" + pub_id)
+        title_id = data[1] + ":_+" + data[0]
+        for name in redis_db.lrange("publications:_+" + username, 0, redis_db.llen("publications:_+" + username)):
+            if name.decode() == title_id:
+                redis_db.lrem(name="publications:_+" +
+                              username, value=title_id, count=0)
+                break
+        return ('<h1>Files API</h1>Succesfully deleted publication: ' + pub_id, 200)
     else:
         return('<h1>Files API</h1>Invalid login data', 401)
 
