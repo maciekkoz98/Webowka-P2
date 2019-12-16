@@ -1,2 +1,2 @@
 FROM chaberb/flask-rest
-RUN pip install redis
+RUN pip install redis requests

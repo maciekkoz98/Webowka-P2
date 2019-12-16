@@ -1,9 +1,17 @@
-from jwt import decode, InvalidTokenError
+from jwt import encode, InvalidTokenError
 from flask import Flask, request
 from flask import jsonify
 from flask_hal import document, HAL, link
 from flask_hal.link import Collection
+from os import getenv
+from dotenv import load_dotenv
 import redis
+import datetime
+import requests
+
+load_dotenv(verbose=True)
+JWT_SECRET = getenv("JWT_SECRET")
+JWT_TIME = int(getenv("JWT_TIME"))
 
 app = Flask(__name__)
 HAL(app)
@@ -56,9 +64,8 @@ def handle_pubs():
                 data = data.decode().split(":_+")
                 publication = prepare_publication(data)
                 if len(data) > 4:
-                    links = Collection(
-                        link.Link('file', data[4])
-                    )
+                    l = link.Link(data[0]+":_+"+id, data[4])
+                    links.append(l)
                 publications.append(publication)
             json = {
                 "publications": publications
@@ -75,8 +82,7 @@ def prepare_publication(data):
 
 
 @app.route("/publications/<fid>", methods=["POST"])
-def get_info(fid):
-    # TODO dodaj do fileshare
+def post_pub(fid):
     username = request.form.get("username")
     password = request.form.get("password")
     if username is None or password is None:
@@ -85,7 +91,7 @@ def get_info(fid):
         pub_title = fid
         file = request.files.get("file")
         filename = file.filename
-        link = 'http://files/download/' + filename
+        link = 'http://files:5000/download/' + filename
         id = "-1"
         for title in redis_db.lrange("publications:_+" + username, 0, redis_db.llen("publications:_+" + username)):
             title = title.decode()
@@ -99,12 +105,32 @@ def get_info(fid):
         data = data + ":_+" + link
         redis_db.set("publications:_+" + username + ":_+" + id,
                      data)
-        return('OK', 200)
+        form_url = "http://files:5000/upload"
+        token = create_token()
+        form_data = {
+            "token": token,           
+        }
+        files = {
+            "file": (filename, file)
+        }
+        answer = requests.post(form_url, data=form_data, files=files)
+        file.close()
+        if(answer.status_code == 401):
+            return ('<h1>Files API</h1>Invalid upload token', 401)
+        elif(answer.status_code == 400):
+            return ('<h1>Files API</h1>No file given', 400)
+        else:
+            return('OK', 200)
     else:
         return('<h1>Files API</h1>Invalid login data', 401)
 
 
 @app.route("/publications/<fid>/delete")
 def deleteFile():
-    #TODO usuwanie plików z bazy publikacji (api) i bazy plików (fileshare)
+    # TODO usuwanie plików z bazy publikacji (api) i bazy plików (fileshare)
     return
+
+
+def create_token():
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_TIME)
+    return encode({"iss": "fileshare.company.com", "exp": expiration}, JWT_SECRET, "HS256")

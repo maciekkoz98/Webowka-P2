@@ -37,7 +37,8 @@ def upload():
     filename = file.filename
     redis_db.rpush("filenames", filename)
     file.close()
-    return redirect(f"{callback}?fname={filename}")
+    return redirect(f"{callback}?fname={filename}") if callback \
+        else ('<h1>Fileshare</h1> File added', 200)
 
 
 @app.route('/download/<fid>')
