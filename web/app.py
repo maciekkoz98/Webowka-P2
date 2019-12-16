@@ -81,11 +81,15 @@ def files():
         api_url = get_api_url(session_id_user_redis)
         publications = requests.get(api_url).json()
         publications = publications["publications"]
+        publications = prepare_publications(publications)
+        API = "https://filesapi.company.com/publications/"
+        username = session_id_user_redis[0]
+        password = redis_instance.get(username).decode()
         # TODO prezentacja publikacji
-
+        # return(f"{publications[1]}", 200)
         return render_template("list.html", filelist=fileslist, publications=publications,
                                FILE=FILE, upload_token=upload_token,
-                               download_token=download_token, WEB=WEB)
+                               download_token=download_token, WEB=WEB, API=API, username=username, password=password)
     else:
         return redirect("/login")
 
@@ -95,6 +99,12 @@ def get_api_url(session_id_user):
     user = session_id_user[0]
     password = redis_instance.get(user).decode()
     return url + "?username=" + user + "&password=" + password
+
+
+def prepare_publications(publications):
+    for i in range(0, len(publications)):
+        publications[i] = publications[i].split(":_+")
+    return publications
 
 
 @app.route('/callback')

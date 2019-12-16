@@ -39,6 +39,7 @@ def handle_pubs():
             if redis_db.exists(username) and redis_db.get(username).decode() == password:
                 id = redis_db.llen("publications:_+" + username)
                 id = str(id)
+                # TODO zapamiętające się id!
                 redis_db.rpush("publications:_+" + username,
                                title + ":_+" + id)
                 redis_db.set("publications:_+" + username + ":_+" + id,

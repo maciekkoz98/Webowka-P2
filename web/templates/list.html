@@ -35,13 +35,36 @@
 </form>
 <div class="list">
     <h2>Lista publikacji:</h2>
-    {% block books %}
-    <ul>
-        {% for publication in publications %}
-            <li>{{publication}}</li>
-        {% endfor %}
-    </ul>
-    {% endblock %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Tytuł</th>
+                <th scope="col">Autorzy</th>
+                <th scope="col">Wydawca</th>
+                <th scope="col">Rok wydania</th>
+                <th scope="col">Plik</th>
+                <th scope="col">Usuń publikację</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% block books %}
+            {% for publication in publications %}
+            <tr>
+                <td>{{publication[1]}}</td>
+                <td>{{publication[2]}}</td>
+                <td>{{publication[3]}}</td>
+                <td>{{publication[4]}}</td>
+                {% if publication[5] %}
+                <td><a href={{publication[5]}}>nazwa_pliku</a> <a href={{publication[6]}}>Usuń plik</a></td>
+                {% else %}
+                <td><a href="/addFileToPub">Dodaj plik</a></td>
+                {% endif %}
+                <td><a href="{{API}}delete/{{publication[0]}}?username={{username}}&password={{password}}">Usuń publikację</a></td>
+            </tr>
+            {% endfor %}
+            {% endblock %}
+        </tbody>
+    </table>
 </div>
 <div>
     <form name="addPubForm" action="/addPub" form method="POST">
