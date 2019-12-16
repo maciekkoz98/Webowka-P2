@@ -114,7 +114,13 @@ def callback():
 
 
 @app.route("/addPub", methods=["POST"])
-def add():
+def add_pub():
+    session_id = request.cookies.get("session_id")
+    redis_session = redis_instance.get("session_id").decode().split(" ")
+    redis_session = redis_session[1]
+    if session_id != redis_session:
+        return redirect("/login")
+
     title = request.form.get("title")
     author = request.form.get("author")
     year = request.form.get("year")
@@ -132,7 +138,7 @@ def add():
     }
     answer = requests.post("http://api:5000/publications", json=body)
     if (answer.status_code == 200):
-        return ('OK', 200)
+        return redirect("/list")
     else:
         return ('nie ok', 400)
 

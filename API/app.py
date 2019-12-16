@@ -42,7 +42,7 @@ def handle_pubs():
                 redis_db.rpush("publications:_+" + username,
                                title + ":_+" + id)
                 redis_db.set("publications:_+" + username + ":_+" + id,
-                             title + ":_+" + author + ":_+" + publisher + ":_+" + year)
+                             id + ":_+" + title + ":_+" + author + ":_+" + publisher + ":_+" + year)
                 return ('OK', 200)
             else:
                 return('<h1>Files API</h1>Invalid login data', 401)
@@ -63,9 +63,11 @@ def handle_pubs():
                 data = redis_db.get("publications:_+" + username + ":_+" + id)
                 data = data.decode().split(":_+")
                 publication = prepare_publication(data)
-                if len(data) > 4:
-                    l = link.Link(data[0]+":_+"+id, data[4])
+                if len(data) > 5:
+                    l = link.Link(data[0] + ":_+download", data[5])
                     links.append(l)
+                    d = link.Link(data[0] + ":_+delete", data[6])
+                    links.append(d)
                 publications.append(publication)
             json = {
                 "publications": publications
@@ -77,44 +79,33 @@ def handle_pubs():
 
 
 def prepare_publication(data):
-    publication = data[0] + ":_+" + data[1] + ":_+" + data[2] + ":_+" + data[3]
+    publication = data[0] + ":_+" + data[1] + ":_+" + \
+        data[2] + ":_+" + data[3] + ":_+" + data[4]
     return publication
 
 
-@app.route("/publications/<fid>", methods=["POST"])
-def post_pub(fid):
+@app.route("/publications/<pub_id>", methods=["POST"])
+def post_pub(pub_id):
     username = request.form.get("username")
     password = request.form.get("password")
     if username is None or password is None:
         return('<h1>FilesApi</h1>No login data', 400)
     if redis_db.exists(username) and redis_db.get(username).decode() == password:
-        pub_title = fid
+        pub_id = str(pub_id)
         file = request.files.get("file")
         filename = file.filename
-        link = 'http://files:5000/download/' + filename
-        id = "-1"
-        for title in redis_db.lrange("publications:_+" + username, 0, redis_db.llen("publications:_+" + username)):
-            title = title.decode()
-            title = title.split(":_+")
-            if title[0] == pub_title:
-                id = title[1]
-                break
-        if id == '-1':
+        download_link = 'http://files:5000/download/' + filename
+        delete_link = 'http://api:5000/publications/' + filename + '/delete?pid=' + pub_id
+        data = redis_db.get("publications:_+" + username +
+                            ":_+" + pub_id)
+        if data is None:
             return ('<h1>FilesApi</h1>Publication not found', 404)
-        data = redis_db.get("publications:_+" + username + ":_+" + id).decode()
-        data = data + ":_+" + link
-        redis_db.set("publications:_+" + username + ":_+" + id,
+        data = data.decode()
+        data = data + ":_+" + download_link + ":_+" + delete_link
+        redis_db.set("publications:_+" + username + ":_+" + pub_id,
                      data)
-        form_url = "http://files:5000/upload"
-        token = create_token()
-        form_data = {
-            "token": token,           
-        }
-        files = {
-            "file": (filename, file)
-        }
-        answer = requests.post(form_url, data=form_data, files=files)
-        file.close()
+
+        answer = upload_file(file, filename)
         if(answer.status_code == 401):
             return ('<h1>Files API</h1>Invalid upload token', 401)
         elif(answer.status_code == 400):
@@ -125,10 +116,77 @@ def post_pub(fid):
         return('<h1>Files API</h1>Invalid login data', 401)
 
 
-@app.route("/publications/<fid>/delete")
-def deleteFile():
-    # TODO usuwanie plików z bazy publikacji (api) i bazy plików (fileshare)
-    return
+def upload_file(file, filename):
+    form_url = "http://files:5000/upload"
+    token = create_token().decode('ascii')
+    form_data = {
+        "token": token,
+    }
+    files = {
+        "file": (filename, file)
+    }
+    answer = requests.post(form_url, data=form_data, files=files)
+    file.close()
+    return answer
+
+
+@app.route("/publications/<file_id>/delete")
+def delete_file(file_id):
+    # TODO użytkownik i hasło musi być dodane w kliencie przy wysłaniu zapytania (?), maybe json(???)
+    username = request.args.get("username")
+    password = request.args.get("password")
+    if redis_db.exists(username) and redis_db.get(username).decode() == password:
+        pub_id = request.args.get("pid")
+        if not check_fid_pub(username, pub_id, file_id):
+            return('<h1>API</h1>Cannot delete file. Bad request', 400)
+        token = create_token().decode('ascii')
+        ans = requests.get("http://files:5000/delete/" +
+                           file_id + "?token=" + token)
+        if ans.status_code == 404:
+            return ('<h1>API</h1>Cannot delete file that not exists', 404)
+        data = redis_db.get("publications:_+" + username +
+                            ":_+" + pub_id)
+        data = data.decode()
+        data = data.split(":_+")
+        data = prepare_publication(data)
+        redis_db.set("publications:_+" + username + ":_+" + pub_id,
+                     data)
+        return ('<h1>Files API</h1>Succesfully deleted file: ' + file_id, 200)
+    else:
+        return('<h1>Files API</h1>Invalid login data', 401)
+
+
+def check_fid_pub(username, pub_id, file_id):
+    data = redis_db.get("publications:_+" + username +
+                        ":_+" + pub_id)
+    if data is None:
+        return False
+    data = data.decode()
+    data = data.split(":_+")
+    if len(data) < 7:
+        return False
+    delete_link = data[6]
+    delete_link = delete_link[29:]
+    if delete_link.find(file_id) == 0:
+        cut = len(file_id) + 12
+        pub_tocheck = delete_link[cut:]
+        if pub_id == pub_tocheck:
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+@app.route("/publications/delete/<pub_id>")
+def delete_publication():
+    # TODO usuwanie publikacji z bazy
+    username = request.args.get("username")
+    password = request.args.get("password")
+    if redis_db.exists(username) and redis_db.get(username).decode() == password:
+        return
+    else:
+        return('<h1>Files API</h1>Invalid login data', 401)
 
 
 def create_token():

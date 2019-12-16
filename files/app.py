@@ -18,7 +18,6 @@ redis_db = redis.Redis(host="redis2", port=6379, db=0)
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    # TODO refactor in order to work with API
     file = request.files.get('file')
     token = request.form.get("token")
     callback = request.form.get("callback")
@@ -60,6 +59,30 @@ def download(fid):
     response = make_response(redis_db.lindex("files", index), 200)
     response.headers['Content-type'] = "multipart/form-data"
     return response
+
+
+@app.route('/delete/<fid>')
+def delete(fid):
+    token = request.args.get('token')
+    if len(fid) == 0:
+        return (f'<h1>Fileshare</h1> No file specified', 404)
+    if token is None:
+        return ('<h1>Fileshare</h1>No token provided', 401)
+    if not check_token(token):
+        return('<h1>Fileshare</h1>Invalid token provided', 401)
+
+    index = 0
+    guard = False
+    for name in redis_db.lrange("filenames", 0, redis_db.llen("filenames")):
+        if name.decode() == fid:
+            redis_db.lrem(name="filenames", value=fid, count=0)
+            guard = True
+            break
+        index += 1
+    if not guard:
+        return ('<h1>Fileshare</h1>File not found. Cannot be deleted.', 404)
+    redis_db.lrem(name="files", value=redis_db.lindex("files", index), count=0)
+    return ('<h1>Fileshare</h1>File deleted', 200)
 
 
 @app.route('/filelist', methods=['POST'])
