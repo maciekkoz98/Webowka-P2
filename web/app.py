@@ -68,34 +68,26 @@ def auth():
 
 @app.route('/list')
 def files():
-    session_id = request.cookies.get('session_id')
-    username = request.cookies.get('username')
-    if username is None or session_id is None:
+    if not check_user():
         return redirect("/login")
-    session_id_redis = redis_instance.get(
-        username + "_session_id")
-    if session_id_redis is None:
-        return redirect("/login")
-    session_id_redis = session_id_redis.decode()
-    if session_id == session_id_redis:
-        upload_token = create_token(JWT_SESSION_TIME).decode('ascii')
-        download_token = create_token(JWT_SESSION_TIME).decode('ascii')
-        list_token = create_token(10).decode('ascii')
-        filelist_json = requests.post(
-            "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
-        fileslist = filelist_json['files']
-        api_url = get_api_url(username)
-        publications = requests.get(api_url).json()
-        publications = publications["publications"]
-        publications = prepare_publications(publications)
-        API = "https://filesapi.company.com/publications/"
-        password = redis_instance.get(username).decode()
-        # TODO prezentacja publikacji
-        return render_template("list.html", filelist=fileslist, publications=publications,
-                               FILE=FILE, upload_token=upload_token,
-                               download_token=download_token, WEB=WEB, API=API, username=username, password=password)
-    else:
-        return redirect("/login")
+
+    username = request.cookies.get("username")
+    upload_token = create_token(JWT_SESSION_TIME).decode('ascii')
+    download_token = create_token(JWT_SESSION_TIME).decode('ascii')
+    list_token = create_token(10).decode('ascii')
+    filelist_json = requests.post(
+        "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
+    fileslist = filelist_json['files']
+    api_url = get_api_url(username)
+    publications = requests.get(api_url).json()
+    publications = publications["publications"]
+    publications = prepare_publications(publications)
+    API = "https://filesapi.company.com/publications/"
+    password = redis_instance.get(username).decode()
+    # TODO prezentacja publikacji
+    return render_template("list.html", filelist=fileslist, publications=publications,
+                           FILE=FILE, upload_token=upload_token,
+                           download_token=download_token, WEB=WEB, API=API, username=username, password=password)
 
 
 def get_api_url(user):
@@ -105,6 +97,7 @@ def get_api_url(user):
 
 
 def prepare_publications(publications):
+    # TODO handle links!
     for i in range(0, len(publications)):
         publications[i] = publications[i].split(":_+")
     return publications
@@ -112,15 +105,11 @@ def prepare_publications(publications):
 
 @app.route('/callback')
 def callback():
-    username = request.cookies.get('username')
-    session_id = request.cookies.get("session_id")
+    if not check_user():
+        return redirect("/login")
 
     error = request.args.get("error")
     filename = request.args.get("fname")
-    redis_session = redis_instance.get(username + "_session_id").decode()
-    if session_id != redis_session:
-        return redirect("/login")
-
     if error:
         return f"<h1>APP</h1> Upload failed: {error}", 400
 
@@ -129,12 +118,10 @@ def callback():
 
 @app.route("/addPub", methods=["POST"])
 def add_pub():
-    session_id = request.cookies.get("session_id")
-    username = request.cookies.get("username")
-    redis_session = redis_instance.get(username + "_session_id").decode()
-    if session_id != redis_session:
+    if not check_user():
         return redirect("/login")
 
+    username = request.cookies.get("username")
     title = request.form.get("title")
     author = request.form.get("author")
     year = request.form.get("year")
@@ -164,6 +151,42 @@ def logout():
     return response
 
 
+@app.route('/addFileToPub')
+def show_form():
+    if not check_user():
+        return redirect("/login")
+
+    username = request.cookies.get("username")
+    pub_id = request.args.get("pid")
+    password = redis_instance.get(username).decode()
+    address = "http://api:5000/publications/" + pub_id
+    return render_template("fileForm.html", API=address, username=username, password=password)
+
+
+@app.route("/sendToAPI", methods=["POST"])
+def attach_file():
+    if not check_user():
+        return redirect("/login")
+
+    username = request.form.get("username")
+    password = request.form.get("password")
+    pub_id = request.form.get("pid")
+    link = "http://api:5000/publications/" + pub_id
+    file = request.files.get("file")
+    form_data = {
+        "username": username,
+        "password": password,
+    }
+    files = {
+        "file": (file.filename, file)
+    }
+
+    ans = requests.post(link, data=form_data, files=files)
+    if ans.status_code == 200:
+        return redirect('/list')
+    # <a href="/addFileToPub?pid={{publication[0]}}">Dodaj plik</a> 
+
+
 def redirect(location):
     responce = make_response('', 303)
     responce.headers["Location"] = location
@@ -173,3 +196,17 @@ def redirect(location):
 def create_token(time):
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
     return encode({"iss": "fileshare.company.com", "exp": expiration}, JWT_SECRET, "HS256")
+
+
+def check_user():
+    session_id = request.cookies.get("session_id")
+    username = request.cookies.get("username")
+    if username is None:
+        return False
+    redis_session = redis_instance.get(username + "_session_id")
+    if redis_session is None:
+        return False
+    redis_session = redis_session.decode()
+    if session_id != redis_session:
+        return False
+    return True

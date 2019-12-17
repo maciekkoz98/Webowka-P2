@@ -59,6 +59,29 @@ input[type="submit"] {
     margin-bottom: 10px;
 }
 
+input.small {
+    vertical-align: middle;
+    padding: 9px 19px 9px 19px;
+    font-size: 12px;
+    text-align: center;
+    font-style: normal;
+    border-radius: 5px;
+    width: 75%;
+    margin-bottom: 0px;
+}
+
+input[type="submit"].small {
+    width: 25%;
+}
+
+.pubForm {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    margin: 0px;
+    padding: 0px;
+}
+
 li {
     list-style-type: none;
 }

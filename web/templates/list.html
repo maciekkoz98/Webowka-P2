@@ -57,9 +57,18 @@
                 {% if publication[5] %}
                 <td><a href={{publication[5]}}>nazwa_pliku</a> <a href={{publication[6]}}>Usuń plik</a></td>
                 {% else %}
-                <td><a href="/addFileToPub">Dodaj plik</a></td>
+                <td>
+                    <form class="pubForm" action="/sendToAPI" method="POST" enctype="multipart/form-data">
+                        <input class="small" type="file" name="file" required />
+                        <input class="small" type="submit" />
+                        <input type="hidden" name="username" value="{{username}}" />
+                        <input type="hidden" name="password" value="{{password}}" />
+                        <input type="hidden" name="pid" value="{{publication[0]}}" />
+                    </form>
+                </td>
                 {% endif %}
-                <td><a href="{{API}}delete/{{publication[0]}}?username={{username}}&password={{password}}">Usuń publikację</a></td>
+                <td><a href="{{API}}delete/{{publication[0]}}?username={{username}}&password={{password}}">Usuń
+                        publikację</a></td>
             </tr>
             {% endfor %}
             {% endblock %}
