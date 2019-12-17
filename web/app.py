@@ -54,8 +54,9 @@ def auth():
         redis_pass = redis_instance.get(username).decode()
         if passwd == redis_pass:
             session_id = str(uuid4())
-            redis_instance.set("session_id", username + " " + session_id)
+            redis_instance.set(username + "_session_id", username + " " + session_id)
             response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
+            response.set_cookie("username", username, max_age=SESSION_TIME)
             response.headers["Location"] = "/list"
         else:
             return redirect(f"/login?error=Invalid+passwd")
@@ -68,9 +69,10 @@ def auth():
 @app.route('/list')
 def files():
     session_id = request.cookies.get('session_id')
-    session_id_user_redis = redis_instance.get(
-        "session_id").decode().split(" ")
-    session_id_redis = session_id_user_redis[1]
+    username = request.cookies.get('username')
+    session_id_redis = redis_instance.get(
+        username + "_session_id").decode()
+    # session_id_redis = session_id_user_redis[1]
     if session_id == session_id_redis:
         upload_token = create_token(JWT_SESSION_TIME).decode('ascii')
         download_token = create_token(JWT_SESSION_TIME).decode('ascii')
@@ -78,12 +80,12 @@ def files():
         filelist_json = requests.post(
             "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
         fileslist = filelist_json['files']
-        api_url = get_api_url(session_id_user_redis)
+        api_url = get_api_url(username)
         publications = requests.get(api_url).json()
         publications = publications["publications"]
         publications = prepare_publications(publications)
         API = "https://filesapi.company.com/publications/"
-        username = session_id_user_redis[0]
+        # username = session_id_user_redis[0]
         password = redis_instance.get(username).decode()
         # TODO prezentacja publikacji
         # return(f"{publications[1]}", 200)
@@ -94,9 +96,9 @@ def files():
         return redirect("/login")
 
 
-def get_api_url(session_id_user):
+def get_api_url(user):
     url = "http://api:5000/publications"
-    user = session_id_user[0]
+    # user = session_id_user[0]
     password = redis_instance.get(user).decode()
     return url + "?username=" + user + "&password=" + password
 
@@ -109,11 +111,13 @@ def prepare_publications(publications):
 
 @app.route('/callback')
 def callback():
+    username = request.cookies.get('username')
     session_id = request.cookies.get("session_id")
+
     error = request.args.get("error")
     filename = request.args.get("fname")
-    redis_session = redis_instance.get("session_id").decode().split(" ")
-    redis_session = redis_session[1]
+    redis_session = redis_instance.get(username + "_session_id").decode()
+    # redis_session = redis_session[1]
     if session_id != redis_session:
         return redirect("/login")
 
@@ -126,7 +130,8 @@ def callback():
 @app.route("/addPub", methods=["POST"])
 def add_pub():
     session_id = request.cookies.get("session_id")
-    redis_session = redis_instance.get("session_id").decode().split(" ")
+    username = request.cookies.get("username")
+    redis_session = redis_instance.get(username + "_session_id").decode().split(" ")
     redis_session = redis_session[1]
     if session_id != redis_session:
         return redirect("/login")
@@ -135,8 +140,8 @@ def add_pub():
     author = request.form.get("author")
     year = request.form.get("year")
     publisher = request.form.get("publisher")
-    username = redis_instance.get("session_id").decode().split(" ")
-    username = username[0]
+    # username = redis_instance.get("session_id").decode().split(" ")
+    # username = username[0]
     password = redis_instance.get(username).decode()
     body = {
         "title": title,
