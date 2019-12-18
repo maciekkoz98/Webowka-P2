@@ -63,9 +63,6 @@ input.small {
     vertical-align: middle;
     padding: 9px 19px 9px 19px;
     font-size: 12px;
-    text-align: center;
-    font-style: normal;
-    border-radius: 5px;
     width: 75%;
     margin-bottom: 0px;
 }
@@ -91,6 +88,25 @@ button {
     font-size: 18px;
     text-align: center;
     margin: auto;
+    border-radius: 5px;
+    border-width: 1px 1px 3px;
+    box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.1) inset;
+}
+
+.deletePub {
+    background-color: tomato;
+    color: #fff;
+    padding: 9px 10px 9px 10px;
+    font-size: 12px;
+}
+
+.deleteFile {
+    background-color: #e8eeef;
+    color: tomato;
+    border-color: tomato;
+    padding: 9px 10px 9px 10px;
+    border-width: 1px;
+    font-size: 12px;
 }
 
 @media screen and (min-width:480px) {

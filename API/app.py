@@ -183,7 +183,6 @@ def check_fid_pub(username, pub_id, file_id):
 
 @app.route("/publications/delete/<pub_id>")
 def delete_publication(pub_id):
-    # TODO usuwanie publikacji z bazy
     username = request.args.get("username")
     password = request.args.get("password")
     if username is None or password is None:

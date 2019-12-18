@@ -67,8 +67,8 @@
                     </form>
                 </td>
                 {% endif %}
-                <td><a href="{{API}}delete/{{publication[0]}}?username={{username}}&password={{password}}">Usuń
-                        publikację</a></td>
+                <td><a href="/deletePub?pid={{publication[0]}}"><button class="deletePub">Usuń
+                        publikację</button></a></td>
             </tr>
             {% endfor %}
             {% endblock %}
@@ -96,6 +96,5 @@
     </form>
 </div>
 
-
-<br>
 <center><a href="/logout"><button>Wyloguj się</button></a></center>
+<br />

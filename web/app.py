@@ -144,6 +144,7 @@ def add_pub():
 
 @app.route('/logout')
 def logout():
+    # TODO repair logout redis
     response = redirect('/login')
     redis_instance.delete("session_id")
     response.set_cookie("session_id", "INVALIDATE", max_age=-1)
@@ -184,7 +185,28 @@ def attach_file():
     ans = requests.post(link, data=form_data, files=files)
     if ans.status_code == 200:
         return redirect('/list')
-    # <a href="/addFileToPub?pid={{publication[0]}}">Dodaj plik</a> 
+    else:
+        return ("<h1>Web</h1>Bad request", 400)
+    # <a href="/addFileToPub?pid={{publication[0]}}">Dodaj plik</a>
+
+
+@app.route("/deletePub")
+def deletePub():
+    if not check_user():
+        redirect('/login')
+    pub_id = request.args.get("pid")
+    if pub_id is None:
+        redirect("/list")
+
+    username = request.cookies.get("username")
+    password = redis_instance.get(username).decode()
+    link = "http://api:5000/publications/delete/" + pub_id + \
+        "?username=" + username + "&password=" + password
+    ans = requests.get(link)
+    if ans.status_code == 200:
+        return redirect('/list')
+    else:
+        return ("<h1>Web</h1>Bad request", 400)
 
 
 def redirect(location):
