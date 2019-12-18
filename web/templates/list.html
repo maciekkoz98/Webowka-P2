@@ -55,7 +55,8 @@
                 <td>{{publication[3]}}</td>
                 <td>{{publication[4]}}</td>
                 {% if publication[5] %}
-                <td><a href={{publication[5]}}>nazwa_pliku</a> <a href={{publication[6]}}>Usuń plik</a></td>
+                <td><a href={{publication[5]}}>{{publication[6]}}</a> <a href={{publication[7]}}><button
+                            class="deleteFile">Usuń plik</button></a></td>
                 {% else %}
                 <td>
                     <form class="pubForm" action="/sendToAPI" method="POST" enctype="multipart/form-data">
@@ -68,7 +69,7 @@
                 </td>
                 {% endif %}
                 <td><a href="/deletePub?pid={{publication[0]}}"><button class="deletePub">Usuń
-                        publikację</button></a></td>
+                            publikację</button></a></td>
             </tr>
             {% endfor %}
             {% endblock %}

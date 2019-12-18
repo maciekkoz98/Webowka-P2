@@ -79,9 +79,9 @@ def files():
         "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
     fileslist = filelist_json['files']
     api_url = get_api_url(username)
-    publications = requests.get(api_url).json()
-    publications = publications["publications"]
-    publications = prepare_publications(publications)
+    pub_json = requests.get(api_url).json()
+
+    publications = prepare_publications(pub_json)
     API = "https://filesapi.company.com/publications/"
     password = redis_instance.get(username).decode()
     # TODO prezentacja publikacji
@@ -96,10 +96,21 @@ def get_api_url(user):
     return url + "?username=" + user + "&password=" + password
 
 
-def prepare_publications(publications):
+def prepare_publications(pub_json):
     # TODO handle links!
+    publications = pub_json["publications"]
+    links = pub_json["_links"]
     for i in range(0, len(publications)):
         publications[i] = publications[i].split(":_+")
+        try:
+            dwn_link = links[str(i) + ":_+download"]['href']
+            del_link = links[str(i) + ":_+delete"]['href']
+            publications[i].append(dwn_link)
+            file_name = dwn_link[39:]
+            publications[i].append(file_name)
+            publications[i].append(del_link)
+        except KeyError:
+            continue
     return publications
 
 
@@ -144,9 +155,9 @@ def add_pub():
 
 @app.route('/logout')
 def logout():
-    # TODO repair logout redis
     response = redirect('/login')
-    redis_instance.delete("session_id")
+    username = request.cookies.get("username")
+    redis_instance.delete(username + "_session_id")
     response.set_cookie("session_id", "INVALIDATE", max_age=-1)
     response.set_cookie("username", "INVALIDATE", max_age=-1)
     return response

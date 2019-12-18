@@ -107,6 +107,7 @@ button {
     padding: 9px 10px 9px 10px;
     border-width: 1px;
     font-size: 12px;
+    margin: 0px 0px 0px 10px;
 }
 
 @media screen and (min-width:480px) {

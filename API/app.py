@@ -95,7 +95,7 @@ def post_pub(pub_id):
         pub_id = str(pub_id)
         file = request.files.get("file")
         filename = file.filename
-        download_link = 'http://files:5000/download/' + filename
+        download_link = 'https://fileshare.company.com/download/' + filename
         delete_link = 'http://api:5000/publications/' + filename + '/delete?pid=' + pub_id
         data = redis_db.get("publications:_+" + username +
                             ":_+" + pub_id)
