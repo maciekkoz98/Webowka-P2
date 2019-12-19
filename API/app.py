@@ -37,9 +37,7 @@ def handle_pubs():
             if title is None or author is None or publisher is None or year is None:
                 return('<h1>FilesApi</h1>No needed data', 400)
             if redis_db.exists(username) and redis_db.get(username).decode() == password:
-                id = redis_db.llen("publications:_+" + username)
-                id = str(id)
-                # TODO zapamiętające się id!
+                id = prepare_id(username)
                 redis_db.rpush("publications:_+" + username,
                                title + ":_+" + id)
                 redis_db.set("publications:_+" + username + ":_+" + id,
@@ -77,6 +75,18 @@ def handle_pubs():
             return document.Document(data=json, links=links)
         else:
             return('<h1>Files API</h1>Invalid login data', 401)
+
+
+def prepare_id(username):
+    size = redis_db.llen("publications:_+" + username)
+    last_pub = redis_db.lrange("publications:_+" + username, size-1, size)
+    if len(last_pub) == 0:
+        return '0'
+    else:
+        record = last_pub[0].decode().split(":_+")
+        id = int(record[1])
+        id = id + 1
+        return str(id)
 
 
 def prepare_publication(data):
@@ -133,7 +143,6 @@ def upload_file(file, filename):
 
 @app.route("/publications/<file_id>/delete")
 def delete_file(file_id):
-    # TODO użytkownik i hasło musi być dodane w kliencie przy wysłaniu zapytania (?), maybe json(???)
     username = request.args.get("username")
     password = request.args.get("password")
     if username is None or password is None:
