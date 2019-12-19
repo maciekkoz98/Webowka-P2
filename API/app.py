@@ -129,7 +129,7 @@ def post_pub(pub_id):
 
 def upload_file(file, filename):
     form_url = "http://files:5000/upload"
-    token = create_token().decode('ascii')
+    token = create_upload_token().decode('ascii')
     form_data = {
         "token": token,
     }
@@ -151,7 +151,7 @@ def delete_file(file_id):
         pub_id = request.args.get("pid")
         if not check_fid_pub(username, pub_id, file_id):
             return('<h1>API</h1>Cannot delete file. Bad request', 400)
-        token = create_token().decode('ascii')
+        token = create_delete_token(file_id).decode('ascii')
         ans = requests.get("http://files:5000/delete/" +
                            file_id + "?token=" + token)
         if ans.status_code == 404:
@@ -222,6 +222,11 @@ def delete_publication(pub_id):
         return('<h1>Files API</h1>Invalid login data', 401)
 
 
-def create_token():
+def create_upload_token():
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_TIME)
-    return encode({"iss": "fileshare.company.com", "exp": expiration}, JWT_SECRET, "HS256")
+    return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "upload"}, JWT_SECRET, "HS256")
+
+
+def create_delete_token(file_id):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_TIME)
+    return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "delete", "file_id": file_id}, JWT_SECRET, "HS256")

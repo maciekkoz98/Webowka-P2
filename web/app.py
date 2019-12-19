@@ -74,9 +74,8 @@ def files():
         return redirect("/login")
 
     username = request.cookies.get("username")
-    upload_token = create_token(JWT_SESSION_TIME).decode('ascii')
-    download_token = create_token(JWT_SESSION_TIME).decode('ascii')
-    list_token = create_token(10).decode('ascii')
+    upload_token = create_upload_token(JWT_SESSION_TIME).decode('ascii')
+    list_token = create_list_token(10).decode('ascii')
     filelist_json = requests.post(
         "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
     fileslist = filelist_json['files']
@@ -87,8 +86,7 @@ def files():
     API = "https://filesapi.company.com/publications/"
     password = redis_instance.get(username).decode()
     return render_template("list.html", filelist=fileslist, publications=publications,
-                           FILE=FILE, upload_token=upload_token,
-                           download_token=download_token, WEB=WEB, API=API, username=username, password=password)
+                           FILE=FILE, upload_token=upload_token, WEB=WEB, API=API, username=username, password=password)
 
 
 def get_api_url(user):
@@ -235,7 +233,8 @@ def downloadFile():
     if not check_user():
         return redirect('/login')
     link = request.form.get("link")
-    token = create_token(10).decode('ascii')
+    file_id = link[39:]
+    token = create_download_token(file_id, 10).decode('ascii')
     return redirect(link + '?token=' + token)
 
 
@@ -245,9 +244,19 @@ def redirect(location):
     return response
 
 
-def create_token(time):
+def create_list_token(time):
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
-    return encode({"iss": "fileshare.company.com", "exp": expiration}, JWT_SECRET, "HS256")
+    return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "list"}, JWT_SECRET, "HS256")
+
+
+def create_upload_token(time):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
+    return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "upload"}, JWT_SECRET, "HS256")
+
+
+def create_download_token(file_id, time):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
+    return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "download", "file_id": file_id}, JWT_SECRET, "HS256")
 
 
 def check_user():

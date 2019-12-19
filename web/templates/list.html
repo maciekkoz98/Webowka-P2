@@ -21,7 +21,12 @@
     {% block filenames %}
     <ul>
         {% for filename in filelist %}
-        <li><a href="{{FILE}}/download/{{filename}}?token={{download_token}}">{{filename}}</a></li>
+        <form class="inLine" action="/downloadFile" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="link" value="{{FILE}}/download/{{filename}}" />
+            <button class="asLink" type="submit">
+                {{filename}}
+            </button>
+        </form>
         {% endfor %}
     </ul>
     {% endblock %}

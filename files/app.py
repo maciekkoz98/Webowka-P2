@@ -47,7 +47,8 @@ def download(fid):
         return (f'<h1>Fileshare</h1> No file specified', 404)
     if token is None:
         return ('<h1>Fileshare</h1>No token provided', 401)
-    if not check_token(token):
+    file_id = check_token(token)
+    if not file_id or file_id != fid:
         return('<h1>Fileshare</h1>Invalid token provided', 401)
 
     index = 0
@@ -103,10 +104,18 @@ def getFileList():
 
 def check_token(t):
     try:
-        decode(t, JWT_SECRET)
+        payload = decode(t, JWT_SECRET)
+        try:
+            if payload['action'] == "delete" or payload['action'] == "download":
+                return payload['file_id']
+            elif payload['action'] == "upload" or payload['action'] == "list":
+                return True
+            else:
+                return False
+        except KeyError:
+            return False
     except InvalidTokenError:
         return False
-    return True
 
 
 def redirect(location):
