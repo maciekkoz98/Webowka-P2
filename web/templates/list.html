@@ -65,7 +65,6 @@
                 {% if publication[5] %}
                 <td>
                     <div class="inLine">
-                        <!-- <a href={{publication[5]}}>{{publication[6]}}</a> -->
                         <form class="inLine" action="/downloadFile" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="link" value="{{publication[5]}}" />
                             <button class="asLink" type="submit">

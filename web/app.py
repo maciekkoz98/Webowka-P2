@@ -55,8 +55,10 @@ def auth():
         if passwd == redis_pass:
             session_id = str(uuid4())
             redis_instance.set(username + "_session_id", session_id)
-            response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
-            response.set_cookie("username", username, max_age=SESSION_TIME)
+            response.set_cookie("session_id", session_id,
+                                max_age=SESSION_TIME, httponly=True, secure=True, samesite='Strict')
+            response.set_cookie(
+                "username", username, max_age=SESSION_TIME, httponly=True, secure=True, samesite='Strict')
             response.headers["Location"] = "/list"
         else:
             return redirect(f"/login?error=Invalid+passwd")
@@ -84,7 +86,6 @@ def files():
     publications = prepare_publications(pub_json)
     API = "https://filesapi.company.com/publications/"
     password = redis_instance.get(username).decode()
-    # TODO prezentacja publikacji
     return render_template("list.html", filelist=fileslist, publications=publications,
                            FILE=FILE, upload_token=upload_token,
                            download_token=download_token, WEB=WEB, API=API, username=username, password=password)
@@ -97,7 +98,6 @@ def get_api_url(user):
 
 
 def prepare_publications(pub_json):
-    # TODO handle links!
     publications = pub_json["publications"]
     links = pub_json["_links"]
     for i in range(0, len(publications)):
@@ -198,7 +198,6 @@ def attach_file():
         return redirect('/list')
     else:
         return ("<h1>Web</h1>Bad request", 400)
-    # <a href="/addFileToPub?pid={{publication[0]}}">Dodaj plik</a>
 
 
 @app.route("/deletePub")
@@ -237,8 +236,6 @@ def downloadFile():
         return redirect('/login')
     link = request.form.get("link")
     token = create_token(10).decode('ascii')
-    # requests.get(link + "?token=" + token)
-    # return redirect('/list')
     return redirect(link + '?token=' + token)
 
 
