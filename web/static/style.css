@@ -71,7 +71,7 @@ input[type="submit"].small {
     width: 25%;
 }
 
-.pubForm {
+.inLine {
     display: flex;
     flex-flow: row wrap;
     align-items: center;
@@ -108,6 +108,21 @@ button {
     border-width: 1px;
     font-size: 12px;
     margin: 0px 0px 0px 10px;
+}
+
+.asLink {
+    margin: 0;
+    padding: 0;
+    border: none;
+    color: #007bff;
+    font-size: 16px;
+    width: 100%;
+    background-color: transparent;
+    text-decoration: underline;
+}
+
+.pubInfo {
+    margin-top: 10px;
 }
 
 @media screen and (min-width:480px) {

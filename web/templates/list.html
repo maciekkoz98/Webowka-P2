@@ -50,16 +50,39 @@
             {% block books %}
             {% for publication in publications %}
             <tr>
-                <td>{{publication[1]}}</td>
-                <td>{{publication[2]}}</td>
-                <td>{{publication[3]}}</td>
-                <td>{{publication[4]}}</td>
+                <td>
+                    <p class="pubInfo">{{publication[1]}}</p>
+                </td>
+                <td>
+                    <p class="pubInfo">{{publication[2]}}</p>
+                </td>
+                <td>
+                    <p class="pubInfo">{{publication[3]}}</p>
+                </td>
+                <td>
+                    <p class="pubInfo">{{publication[4]}}</p>
+                </td>
                 {% if publication[5] %}
-                <td><a href={{publication[5]}}>{{publication[6]}}</a> <a href={{publication[7]}}><button
-                            class="deleteFile">Usuń plik</button></a></td>
+                <td>
+                    <div class="inLine">
+                        <!-- <a href={{publication[5]}}>{{publication[6]}}</a> -->
+                        <form class="inLine" action="/downloadFile" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="link" value="{{publication[5]}}" />
+                            <button class="asLink" type="submit">
+                                {{publication[6]}}
+                            </button>
+                        </form>
+                        <form class="inLine" action="/delFile" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="link" value="{{publication[7]}}" />
+                            <button class="deleteFile" type="submit">
+                                Usuń plik
+                            </button>
+                        </form>
+                    </div>
+                </td>
                 {% else %}
                 <td>
-                    <form class="pubForm" action="/sendToAPI" method="POST" enctype="multipart/form-data">
+                    <form class="inLine" action="/sendToAPI" method="POST" enctype="multipart/form-data">
                         <input class="small" type="file" name="file" required />
                         <input class="small" type="submit" />
                         <input type="hidden" name="username" value="{{username}}" />

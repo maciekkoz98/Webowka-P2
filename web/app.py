@@ -220,10 +220,32 @@ def deletePub():
         return ("<h1>Web</h1>Bad request", 400)
 
 
+@app.route("/delFile", methods=["POST"])
+def delFile():
+    if not check_user():
+        return redirect('/login')
+    link = request.form.get("link")
+    username = request.cookies.get("username")
+    password = redis_instance.get(username).decode()
+    requests.get(link + "&username=" + username + "&password=" + password)
+    return redirect('/list')
+
+
+@app.route("/downloadFile", methods=["POST"])
+def downloadFile():
+    if not check_user():
+        return redirect('/login')
+    link = request.form.get("link")
+    token = create_token(10).decode('ascii')
+    # requests.get(link + "?token=" + token)
+    # return redirect('/list')
+    return redirect(link + '?token=' + token)
+
+
 def redirect(location):
-    responce = make_response('', 303)
-    responce.headers["Location"] = location
-    return responce
+    response = make_response('', 303)
+    response.headers["Location"] = location
+    return response
 
 
 def create_token(time):
