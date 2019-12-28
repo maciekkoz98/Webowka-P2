@@ -11,4 +11,8 @@
     <string name="login_failed">"Login failed"</string>
     <string name="title_activity_pubs">Publications</string>
     <string name="delete_file_button">Delete</string>
+    <string name="author_label">Author:</string>
+    <string name="publisher_label">Publisher:</string>
+    <string name="year_label">Year:</string>
+    <string name="trash_description">rubish dump</string>
 </resources>

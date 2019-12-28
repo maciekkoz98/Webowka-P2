@@ -9,4 +9,8 @@
     <string name="welcome">Witaj!</string>
     <string name="title_activity_pubs">Publikacje</string>
     <string name="delete_file_button">Usuń</string>
+    <string name="year_label">Rok:</string>
+    <string name="publisher_label">Wydawca:</string>
+    <string name="author_label">Autor:</string>
+    <string name="trash_description">kosz na śmieci</string>
 </resources>
