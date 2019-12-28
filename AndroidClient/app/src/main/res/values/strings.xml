@@ -9,10 +9,14 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <!-- Strings related to publication view -->
     <string name="title_activity_pubs">Publications</string>
     <string name="delete_file_button">Delete</string>
     <string name="author_label">Author:</string>
     <string name="publisher_label">Publisher:</string>
     <string name="year_label">Year:</string>
-    <string name="trash_description">rubish dump</string>
+    <string name="trash_description">rubbish dump</string>
+    <!-- Strings related to add publication view -->
+    <string name="title_activity_addPub">Add a publication</string>
+    <string name="title_label">Title:</string>
 </resources>

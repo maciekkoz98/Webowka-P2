@@ -10,9 +10,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.example.androidclient.ui.publicationsView.PublicationsActivity"
+            android:name=".ui.addPublicationView.AddPublicationActivity"
+            android:label="@string/title_activity_addPub"
+            android:parentActivityName=".ui.publicationsView.PublicationsActivity" />
+        <activity
+            android:name=".ui.publicationsView.PublicationsActivity"
             android:label="@string/title_activity_pubs"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ui.login.LoginActivity"
             android:label="@string/app_name">

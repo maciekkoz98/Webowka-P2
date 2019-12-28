@@ -13,4 +13,6 @@
     <string name="publisher_label">Wydawca:</string>
     <string name="author_label">Autor:</string>
     <string name="trash_description">kosz na śmieci</string>
+    <string name="title_activity_addPub">Dodaj publikację</string>
+    <string name="title_label">Tytuł:</string>
 </resources>
