@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.androidclient.R
 import kotlinx.android.synthetic.main.pubs_view.view.*
 
-class PublicationsAdapter(private val pubsDataSet: Array<Publication>) :
+class PublicationsAdapter(private val pubsDataSet: List<Publication>) :
     RecyclerView.Adapter<PublicationsAdapter.PubsViewHolder>() {
     class PubsViewHolder(val linearLayout: LinearLayout) : RecyclerView.ViewHolder(linearLayout)
 
