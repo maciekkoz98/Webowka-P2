@@ -118,7 +118,7 @@ class LoginActivity : AppCompatActivity() {
         loading.visibility = View.VISIBLE
         val manager = SelfSignedManager()
         val context = applicationContext
-        val queue = Volley.newRequestQueue(this, manager.makeHurlStack(context))
+        val queue = Volley.newRequestQueue(this, manager.makeHurlStack())
 
         val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"
         val jsonObjectRequest =
