@@ -2,11 +2,7 @@ package com.example.androidclient.ui.login
 
 import android.app.Activity
 import android.content.Intent
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -15,11 +11,21 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Toast
-
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.example.androidclient.R
+import com.example.androidclient.data.SelfSignedManager
 import com.example.androidclient.ui.publicationsView.PublicationsActivity
 
 const val LOGIN = "com.example.androidclient.ui.login.LOGIN"
+const val PASSWORD = "com.example.androidclient.ui.login.PASSWORD"
+const val JSON = "filesapi.company.com.JSON"
 
 class LoginActivity : AppCompatActivity() {
 
@@ -61,12 +67,10 @@ class LoginActivity : AppCompatActivity() {
                 return@Observer
             }
             if (loginResult.success != null) {
-                updateUiWithUser(loginResult.success)
+                if (!updateUiWithUser(loginResult.success)) {
+                    return@Observer
+                }
             }
-            setResult(Activity.RESULT_OK)
-
-            //Complete and destroy login activity once successful
-            finish()
         })
 
         username.afterTextChanged {
@@ -102,21 +106,44 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateUiWithUser(model: LoggedInUserView) {
-        val welcome = getString(R.string.welcome)
-        val displayName = model.displayName
-        // TODO : initiate successful logged in experience
-        Toast.makeText(
-            applicationContext,
-            "$welcome $displayName",
-            Toast.LENGTH_LONG
-        ).show()
+    private fun updateUiWithUser(model: LoggedInUserView): Boolean {
+        val username = model.username
+        val hashedPassword = model.hashedPassword
+        getJSON(username, hashedPassword)
+        return false
+    }
 
-        val intent = Intent(this, PublicationsActivity::class.java).apply {
-            putExtra(LOGIN, displayName)
-            //putExtra(PASSWORD, password)
-        }
-        startActivity(intent)
+    private fun getJSON(username: String, hashedPassword: String) {
+        val loading = findViewById<ProgressBar>(R.id.loading)
+        loading.visibility = View.VISIBLE
+        val manager = SelfSignedManager()
+        val context = applicationContext
+        val queue = Volley.newRequestQueue(this, manager.makeHurlStack(context))
+
+        val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"
+        val jsonObjectRequest =
+            JsonObjectRequest(Request.Method.GET, url, null, Response.Listener { response ->
+                loading.visibility = View.GONE
+                val pubsJSON = response.toString()
+                val intent = Intent(this, PublicationsActivity::class.java).apply {
+                    putExtra(LOGIN, username)
+                    putExtra(PASSWORD, hashedPassword)
+                    putExtra(JSON, pubsJSON)
+                }
+                startActivity(intent)
+                setResult(Activity.RESULT_OK)
+                finish()
+            }, Response.ErrorListener {
+                loading.visibility = View.GONE
+                val internetError = getString(R.string.internet_error)
+                val tryAgainLater = getString(R.string.try_again_later)
+                Toast.makeText(
+                    applicationContext,
+                    "$internetError\n$tryAgainLater",
+                    Toast.LENGTH_LONG
+                ).show()
+            })
+        queue.add(jsonObjectRequest)
     }
 
     private fun showLoginFailed(@StringRes errorString: Int) {

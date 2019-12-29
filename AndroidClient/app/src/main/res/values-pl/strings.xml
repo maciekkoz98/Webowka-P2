@@ -15,4 +15,6 @@
     <string name="trash_description">kosz na śmieci</string>
     <string name="title_activity_addPub">Dodaj publikację</string>
     <string name="title_label">Tytuł:</string>
+    <string name="internet_error">Błąd w połączeniu internetowym.</string>
+    <string name="try_again_later">Spróbuj ponownie później.</string>
 </resources>

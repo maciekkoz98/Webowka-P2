@@ -11,6 +11,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx-myconf.conf:/etc/nginx/nginx.conf
+      - ./cert.crt:/etc/nginx/server.company.com.crt
 
   web:
     build:

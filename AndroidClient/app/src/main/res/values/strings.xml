@@ -19,4 +19,6 @@
     <!-- Strings related to add publication view -->
     <string name="title_activity_addPub">Add a publication</string>
     <string name="title_label">Title:</string>
+    <string name="internet_error">Error in the Internet connection.</string>
+    <string name="try_again_later">Try again later.</string>
 </resources>
