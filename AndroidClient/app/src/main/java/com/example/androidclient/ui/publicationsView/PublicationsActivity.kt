@@ -16,6 +16,7 @@ import com.example.androidclient.data.SelfSignedManager
 import com.example.androidclient.ui.addPublicationView.AddPublicationActivity
 import com.example.androidclient.ui.login.JSON
 import com.example.androidclient.ui.login.LOGIN
+import com.example.androidclient.ui.login.PASSWORD
 import kotlinx.android.synthetic.main.activity_pubs.*
 import org.json.JSONObject
 
@@ -49,6 +50,7 @@ class PublicationsActivity : AppCompatActivity() {
         fab.setOnClickListener {
             val intent = Intent(this, AddPublicationActivity::class.java).apply {
                 putExtra(LOGIN, user)
+                putExtra(PASSWORD, hashedPassword)
                 putExtra(JSON, json)
             }
             startActivity(intent)
