@@ -18,8 +18,8 @@ import androidx.lifecycle.ViewModelProviders
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
 import com.example.androidclient.R
+import com.example.androidclient.data.RequestQueueSingleton
 import com.example.androidclient.data.SelfSignedManager
 import com.example.androidclient.ui.publicationsView.PublicationsActivity
 
@@ -117,8 +117,10 @@ class LoginActivity : AppCompatActivity() {
         val loading = findViewById<ProgressBar>(R.id.loading)
         loading.visibility = View.VISIBLE
         val manager = SelfSignedManager()
-        val context = applicationContext
-        val queue = Volley.newRequestQueue(this, manager.makeHurlStack())
+        //val queue = Volley.newRequestQueue(this, manager.makeHurlStack())
+        val requestQueue =
+            RequestQueueSingleton.getInstance(this.applicationContext, manager.makeHurlStack())
+                .requestQueue
 
         val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"
         val jsonObjectRequest =
@@ -143,7 +145,7 @@ class LoginActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             })
-        queue.add(jsonObjectRequest)
+        requestQueue.add(jsonObjectRequest)
     }
 
     private fun showLoginFailed(@StringRes errorString: Int) {
