@@ -8,7 +8,7 @@
     <string name="prompt_password">Hasło</string>
     <string name="welcome">Witaj!</string>
     <string name="title_activity_pubs">Publikacje</string>
-    <string name="delete_file_button">Usuń</string>
+    <string name="delete_pub">Usuń publikację</string>
     <string name="year_label">Rok:</string>
     <string name="publisher_label">Wydawca:</string>
     <string name="author_label">Autor:</string>
@@ -17,4 +17,9 @@
     <string name="title_label">Tytuł:</string>
     <string name="internet_error">Błąd w połączeniu internetowym.</string>
     <string name="try_again_later">Spróbuj ponownie później.</string>
+    <string name="selected">Wybrano</string>
+    <string name="download">Pobierz</string>
+    <string name="attach_file">Załącz plik</string>
+    <string name="delete_file">Usuń plik</string>
+    <string name="data_sync_error">Dane nie zsynchronizowane</string>
 </resources>

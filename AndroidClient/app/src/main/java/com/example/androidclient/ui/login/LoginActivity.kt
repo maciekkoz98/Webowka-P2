@@ -117,7 +117,6 @@ class LoginActivity : AppCompatActivity() {
         val loading = findViewById<ProgressBar>(R.id.loading)
         loading.visibility = View.VISIBLE
         val manager = SelfSignedManager()
-        //val queue = Volley.newRequestQueue(this, manager.makeHurlStack())
         val requestQueue =
             RequestQueueSingleton.getInstance(this.applicationContext, manager.makeHurlStack())
                 .requestQueue
