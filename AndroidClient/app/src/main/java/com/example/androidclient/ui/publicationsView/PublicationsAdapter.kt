@@ -27,19 +27,24 @@ class PublicationsAdapter(
     private lateinit var requestQueue: RequestQueue
 
     override fun onLongTap(index: Int) {
-        println("[onLongTap]SelectedID: $selectedID")
         if (selectedID != -1) {
             onTap(selectedID)
         }
         setIDSelected(index)
-        //TODO check and start proper action menu (if file attached)
-        parent.startActionMode(true)
+        if (pubsDataSet[index].filename != null) {
+            parent.startActionMode(true)
+        } else {
+            parent.startActionMode(false)
+        }
     }
 
     override fun onTap(index: Int) {
         if (selectedID == index) {
             setIDSelected(index)
             parent.stopActionMode()
+        } else {
+            if (pubsDataSet[index].filename != null)
+                downloadSelectedFile()
         }
     }
 
@@ -48,7 +53,6 @@ class PublicationsAdapter(
             selectedID -> -1
             else -> index
         }
-        println("[setID]SelectedID: $selectedID")
         notifyItemChanged(index)
     }
 
@@ -74,6 +78,11 @@ class PublicationsAdapter(
         holder.linearLayout.author.text = publication.author
         holder.linearLayout.publisher.text = publication.publisher
         holder.linearLayout.year.text = publication.year
+        if (publication.filename != null) {
+            holder.linearLayout.file_link.text = publication.filename
+        } else {
+            holder.linearLayout.file_link.text = ""
+        }
 
         if (position == selectedID) {
             holder.linearLayout.background =
@@ -120,7 +129,7 @@ class PublicationsAdapter(
 
     }
 
-    fun uploadFile(){
+    fun uploadFile() {
 
     }
 }

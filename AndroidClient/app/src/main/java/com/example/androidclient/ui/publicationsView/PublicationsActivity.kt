@@ -2,9 +2,6 @@ package com.example.androidclient.ui.publicationsView
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.ActionMode
-import android.view.Menu
-import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -98,7 +95,7 @@ class PublicationsActivity : AppCompatActivity() {
         return publicationsArray
     }
 
-    private fun prepareMap(links: String): Map<String, String> {
+    private fun prepareMap(links: String): HashMap<String, String> {
         val linksArray = links.split("\"")
         val onlyLinks = ArrayList<String>()
         for (i in 1 until linksArray.size step 2) {
@@ -113,8 +110,8 @@ class PublicationsActivity : AppCompatActivity() {
                 break
             } else if (key == "$index:_+download") {
                 val filename = link.substring(43)
-                index += 1
                 map["$index:_+filename"] = filename
+                index += 1
             }
             map[key] = link
         }
