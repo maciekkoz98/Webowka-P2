@@ -7,5 +7,7 @@ data class Publication(
     val publisher: String,
     val year: String
 ) {
-    private var filename: String? = null
+    var filename: String? = null
+    var downloadLink: String? = null
+    var deleteLink: String? = null
 }

@@ -30,7 +30,7 @@ class PublicationsActivity : AppCompatActivity() {
     private lateinit var requestQueue: RequestQueue
     private lateinit var username: String
     private lateinit var hashedPassword: String
-    private var actionModeMenu: ActionMode? = null
+    private lateinit var menuActionModeCallback: MenuActionModeCallback
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,14 +84,41 @@ class PublicationsActivity : AppCompatActivity() {
         val publicationsArray = ArrayList<Publication>()
         val jsonObject = JSONObject(json)
         val publications = jsonObject.getJSONArray("publications")
+        val linksMap = prepareMap(jsonObject.getString("_links"))
         for (i in 0 until publications.length()) {
             val publicationJSON = publications.get(i) as String
             val pubArray = publicationJSON.split(":_+")
             val publication =
                 Publication(pubArray[0].toInt(), pubArray[1], pubArray[2], pubArray[3], pubArray[4])
+            publication.filename = linksMap["$i:_+filename"]
+            publication.downloadLink = linksMap["$i:_+download"]
+            publication.deleteLink = linksMap["$i:_+delete"]
             publicationsArray.add(publication)
         }
         return publicationsArray
+    }
+
+    private fun prepareMap(links: String): Map<String, String> {
+        val linksArray = links.split("\"")
+        val onlyLinks = ArrayList<String>()
+        for (i in 1 until linksArray.size step 2) {
+            onlyLinks.add(linksArray[i])
+        }
+        val map = HashMap<String, String>()
+        var index = 0
+        for (i in 0 until onlyLinks.size step 3) {
+            val key = onlyLinks[i]
+            val link = onlyLinks[i + 2]
+            if (key == "self") {
+                break
+            } else if (key == "$index:_+download") {
+                val filename = link.substring(43)
+                index += 1
+                map["$index:_+filename"] = filename
+            }
+            map[key] = link
+        }
+        return map
     }
 
     private fun setRecyclerView(json: String) {
@@ -106,54 +133,28 @@ class PublicationsActivity : AppCompatActivity() {
         }
     }
 
-    fun startActionMode() {
-        toolbar.startActionMode(PubsActionModeCallback())
+    fun startActionMode(menuWithFile: Boolean) {
+        if (menuWithFile) {
+            menuActionModeCallback = WithFileActionModeCallback(
+                null,
+                viewAdapter,
+                username,
+                hashedPassword,
+                getString(R.string.selected)
+            )
+        } else {
+            menuActionModeCallback = WithoutFileActionModeCallback(
+                null,
+                viewAdapter,
+                username,
+                hashedPassword,
+                getString(R.string.selected)
+            )
+        }
+        menuActionModeCallback.startActionMode(toolbar)
     }
 
     fun stopActionMode() {
-        actionModeMenu?.finish()
-        actionModeMenu = null
-    }
-
-    inner class PubsActionModeCallback : ActionMode.Callback {
-        private var shouldResetRecyclerView = false
-        override fun onActionItemClicked(actionMode: ActionMode, item: MenuItem): Boolean {
-            when (item.itemId) {
-                R.id.action_delete_file -> {
-                    //TODO
-                    // adapter usuwa link w publikacji i wysyła żądanie o usunięcie
-                    viewAdapter.deleteSelectedFile()
-                    shouldResetRecyclerView = true
-                    actionMode.finish()
-                    return true
-                }
-                R.id.action_delete_publication -> {
-                    viewAdapter.deleteSelectedPublication(username, hashedPassword)
-                    actionMode.finish()
-                    return true
-                }
-                R.id.action_download -> {
-                    //TODO handle downloading file
-                    viewAdapter.downloadSelectedFile()
-                    actionMode.finish()
-                    return true
-                }
-            }
-            return false
-        }
-
-        override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-            actionModeMenu = mode
-            val inflater = mode?.menuInflater
-            inflater?.inflate(R.menu.contextual_menu, menu)
-            return true
-        }
-
-        override fun onDestroyActionMode(mode: ActionMode?) {
-        }
-
-        override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-            return true
-        }
+        menuActionModeCallback.finishActionMode()
     }
 }

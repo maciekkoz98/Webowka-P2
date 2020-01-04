@@ -4,12 +4,15 @@ from flask import Flask
 from flask import request
 from flask import make_response
 from flask import render_template
+from flask import Response
+from flask import jsonify
 from dotenv import load_dotenv
 from os import getenv
 import datetime
 import redis
 import hashlib
 import requests
+import json
 
 load_dotenv(verbose=True)
 
@@ -222,6 +225,7 @@ def delFile():
     if not check_user():
         return redirect('/login')
     link = request.form.get("link")
+    link = "http://api:5000" + link[28:]
     username = request.cookies.get("username")
     password = redis_instance.get(username).decode()
     requests.get(link + "&username=" + username + "&password=" + password)

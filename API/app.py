@@ -3,6 +3,7 @@ from flask import Flask, request
 from flask import jsonify
 from flask_hal import document, HAL, link
 from flask_hal.link import Collection
+from flask import make_response
 from os import getenv
 from dotenv import load_dotenv
 import redis
@@ -106,7 +107,8 @@ def post_pub(pub_id):
         file = request.files.get("file")
         filename = file.filename
         download_link = 'https://fileshare.company.com/download/' + filename
-        delete_link = 'http://api:5000/publications/' + filename + '/delete?pid=' + pub_id
+        delete_link = 'https://filesapi.company.com/publications/' + \
+            filename + '/delete?pid=' + pub_id
         data = redis_db.get("publications:_+" + username +
                             ":_+" + pub_id)
         if data is None:
@@ -178,7 +180,7 @@ def check_fid_pub(username, pub_id, file_id):
     if len(data) < 7:
         return False
     delete_link = data[6]
-    delete_link = delete_link[29:]
+    delete_link = delete_link[42:]
     if delete_link.find(file_id) == 0:
         cut = len(file_id) + 12
         pub_tocheck = delete_link[cut:]
@@ -202,7 +204,8 @@ def delete_publication(pub_id):
             return ('<h1>FilesApi</h1>Publication not found', 404)
         data = data.decode().split(":_+")
         if len(data) > 5:
-            url = data[6] + "&username=" + username + "&password=" + password
+            url = "http://api:5000" + data[6][28:]
+            url = url + "&username=" + username + "&password=" + password
             ans = requests.get(url)
             if ans.status_code == 400:
                 return("Error", 400)

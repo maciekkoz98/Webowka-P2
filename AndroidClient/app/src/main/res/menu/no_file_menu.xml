@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.publicationsView.PublicationsActivity">
+    <!-- Toolbar ActionMode Menu Items -->
+    <item
+        android:id="@+id/action_attach_file"
+        android:icon="@drawable/ic_attachment_gray_24dp"
+        android:orderInCategory="100"
+        android:title="@string/attach_file"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_delete_publication"
+        android:icon="@drawable/ic_delete_gray_24dp"
+        android:orderInCategory="100"
+        android:title="@string/delete_pub"
+        app:showAsAction="always" />
+</menu>

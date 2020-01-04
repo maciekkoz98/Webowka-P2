@@ -12,7 +12,7 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_delete_file"
-        android:icon="@drawable/ic_attachment_gray_24dp"
+        android:icon="@drawable/ic_attachment_crossed24px"
         android:orderInCategory="100"
         android:title="@string/delete_file"
         app:showAsAction="ifRoom" />

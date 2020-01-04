@@ -27,11 +27,13 @@ class PublicationsAdapter(
     private lateinit var requestQueue: RequestQueue
 
     override fun onLongTap(index: Int) {
+        println("[onLongTap]SelectedID: $selectedID")
         if (selectedID != -1) {
             onTap(selectedID)
         }
         setIDSelected(index)
-        parent.startActionMode()
+        //TODO check and start proper action menu (if file attached)
+        parent.startActionMode(true)
     }
 
     override fun onTap(index: Int) {
@@ -46,6 +48,7 @@ class PublicationsAdapter(
             selectedID -> -1
             else -> index
         }
+        println("[setID]SelectedID: $selectedID")
         notifyItemChanged(index)
     }
 
@@ -98,6 +101,7 @@ class PublicationsAdapter(
         val stringRequest = StringRequest(Request.Method.GET, url, Response.Listener<String> {
             pubsDataSet.removeAt(selectedID)
             notifyDataSetChanged()
+            setIDSelected(selectedID)
         }, Response.ErrorListener {
             val internetError = context.getString(R.string.internet_error)
             val dataSync = context.getString(R.string.data_sync_error)
@@ -106,12 +110,17 @@ class PublicationsAdapter(
                 "$internetError\n$dataSync",
                 Toast.LENGTH_LONG
             ).show()
+            setIDSelected(selectedID)
         })
-        setIDSelected(selectedID)
+
         requestQueue.add(stringRequest)
     }
 
     fun downloadSelectedFile() {
+
+    }
+
+    fun uploadFile(){
 
     }
 }
