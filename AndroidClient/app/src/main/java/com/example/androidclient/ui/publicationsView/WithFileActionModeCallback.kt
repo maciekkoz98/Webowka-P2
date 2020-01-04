@@ -18,9 +18,7 @@ class WithFileActionModeCallback(
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_delete_file -> {
-                //TODO
-                // adapter usuwa link w publikacji i wysyła żądanie o usunięcie
-                viewAdapter.deleteSelectedFile()
+                viewAdapter.deleteSelectedFile(username, hashedPassword)
                 mode.finish()
                 return true
             }

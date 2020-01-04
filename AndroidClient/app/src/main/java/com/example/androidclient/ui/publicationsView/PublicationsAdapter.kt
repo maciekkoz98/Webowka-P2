@@ -95,12 +95,25 @@ class PublicationsAdapter(
 
     override fun getItemCount() = pubsDataSet.size
 
-    fun deleteSelectedFile() {
+    fun deleteSelectedFile(username: String, hashedPassword: String) {
         val publication = pubsDataSet[selectedID]
-    }
-
-    fun deleteSelectedFile(index: Int) {
-        val publication = pubsDataSet[index]
+        var deleteLink = publication.deleteLink
+        deleteLink ?: return
+        deleteLink =
+            "https://10.0.2.2" + deleteLink.substring(28) + "&username=$username&password=$hashedPassword"
+        println(deleteLink)
+        val stringRequest =
+            StringRequest(Request.Method.GET, deleteLink, Response.Listener<String> {
+                publication.filename = null
+                publication.deleteLink = null
+                publication.downloadLink = null
+                notifyItemChanged(selectedID)
+                setIDSelected(selectedID)
+            }, Response.ErrorListener {
+                makeErrorToast()
+                setIDSelected(selectedID)
+            })
+        requestQueue.add(stringRequest)
     }
 
     fun deleteSelectedPublication(username: String, hashedPassword: String) {
@@ -112,16 +125,9 @@ class PublicationsAdapter(
             notifyDataSetChanged()
             setIDSelected(selectedID)
         }, Response.ErrorListener {
-            val internetError = context.getString(R.string.internet_error)
-            val dataSync = context.getString(R.string.data_sync_error)
-            Toast.makeText(
-                context.applicationContext,
-                "$internetError\n$dataSync",
-                Toast.LENGTH_LONG
-            ).show()
+            makeErrorToast()
             setIDSelected(selectedID)
         })
-
         requestQueue.add(stringRequest)
     }
 
@@ -131,5 +137,15 @@ class PublicationsAdapter(
 
     fun uploadFile() {
 
+    }
+
+    private fun makeErrorToast() {
+        val internetError = context.getString(R.string.internet_error)
+        val dataSync = context.getString(R.string.data_sync_error)
+        Toast.makeText(
+            context.applicationContext,
+            "$internetError\n$dataSync",
+            Toast.LENGTH_LONG
+        ).show()
     }
 }

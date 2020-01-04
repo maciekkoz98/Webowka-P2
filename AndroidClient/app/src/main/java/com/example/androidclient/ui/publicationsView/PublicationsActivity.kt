@@ -96,7 +96,8 @@ class PublicationsActivity : AppCompatActivity() {
     }
 
     private fun prepareMap(links: String): HashMap<String, String> {
-        val linksArray = links.split("\"")
+        val betterLinks = links.replace("\\/", "/")
+        val linksArray = betterLinks.split("\"")
         val onlyLinks = ArrayList<String>()
         for (i in 1 until linksArray.size step 2) {
             onlyLinks.add(linksArray[i])
@@ -109,7 +110,7 @@ class PublicationsActivity : AppCompatActivity() {
             if (key == "self") {
                 break
             } else if (key == "$index:_+download") {
-                val filename = link.substring(43)
+                val filename = link.substring(39)
                 map["$index:_+filename"] = filename
                 index += 1
             }
