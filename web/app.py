@@ -232,7 +232,7 @@ def delFile():
     return redirect('/list')
 
 
-@app.route("/downloadFile", methods=["POST"])
+@app.route("/fileDownload", methods=["POST"])
 def downloadFile():
     if not check_user():
         return redirect('/login')
@@ -260,6 +260,7 @@ def create_upload_token(time):
 
 def create_download_token(file_id, time):
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
+    print(expiration, flush=True)
     return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "download", "file_id": file_id}, JWT_SECRET, "HS256")
 
 

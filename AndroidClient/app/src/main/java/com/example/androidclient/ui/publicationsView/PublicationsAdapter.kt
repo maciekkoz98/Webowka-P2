@@ -14,7 +14,6 @@ import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.example.androidclient.R
 import com.example.androidclient.data.RequestQueueSingleton
-import com.example.androidclient.data.SelfSignedManager
 import kotlinx.android.synthetic.main.pubs_view.view.*
 
 class PublicationsAdapter(
@@ -23,7 +22,7 @@ class PublicationsAdapter(
     private val pubsDataSet: ArrayList<Publication>
 ) :
     RecyclerView.Adapter<PubsViewHolder>(), ViewHolderClickListener {
-    private var selectedID: Int = -1
+    var selectedID: Int = -1
     private lateinit var requestQueue: RequestQueue
 
     override fun onLongTap(index: Int) {
@@ -60,9 +59,8 @@ class PublicationsAdapter(
         parent: ViewGroup,
         viewType: Int
     ): PubsViewHolder {
-        val manager = SelfSignedManager()
         requestQueue =
-            RequestQueueSingleton.getInstance(context.applicationContext, manager.makeHurlStack())
+            RequestQueueSingleton.getInstance(context.applicationContext)
                 .requestQueue
         val linearLayout = LayoutInflater.from(parent.context).inflate(
             R.layout.pubs_view,
@@ -101,7 +99,6 @@ class PublicationsAdapter(
         deleteLink ?: return
         deleteLink =
             "https://10.0.2.2" + deleteLink.substring(28) + "&username=$username&password=$hashedPassword"
-        println(deleteLink)
         val stringRequest =
             StringRequest(Request.Method.GET, deleteLink, Response.Listener<String> {
                 publication.filename = null
@@ -132,7 +129,7 @@ class PublicationsAdapter(
     }
 
     fun downloadSelectedFile() {
-
+        parent.createFile()
     }
 
     fun uploadFile() {
@@ -147,5 +144,9 @@ class PublicationsAdapter(
             "$internetError\n$dataSync",
             Toast.LENGTH_LONG
         ).show()
+    }
+
+    fun getSelectedPublication(): Publication {
+        return pubsDataSet[selectedID]
     }
 }

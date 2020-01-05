@@ -20,7 +20,6 @@ import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.example.androidclient.R
 import com.example.androidclient.data.RequestQueueSingleton
-import com.example.androidclient.data.SelfSignedManager
 import com.example.androidclient.ui.publicationsView.PublicationsActivity
 
 const val LOGIN = "com.example.androidclient.ui.login.LOGIN"
@@ -116,9 +115,9 @@ class LoginActivity : AppCompatActivity() {
     private fun getJSON(username: String, hashedPassword: String) {
         val loading = findViewById<ProgressBar>(R.id.loading)
         loading.visibility = View.VISIBLE
-        val manager = SelfSignedManager()
+
         val requestQueue =
-            RequestQueueSingleton.getInstance(this.applicationContext, manager.makeHurlStack())
+            RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
 
         val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"

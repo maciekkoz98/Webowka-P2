@@ -22,4 +22,5 @@
     <string name="attach_file">Załącz plik</string>
     <string name="delete_file">Usuń plik</string>
     <string name="data_sync_error">Dane nie zsynchronizowane</string>
+    <string name="no_write_permission">Bez uprawnień aplikacja nie może pobierać plików!</string>
 </resources>

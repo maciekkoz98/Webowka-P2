@@ -10,7 +10,6 @@ import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.example.androidclient.R
 import com.example.androidclient.data.RequestQueueSingleton
-import com.example.androidclient.data.SelfSignedManager
 import com.example.androidclient.ui.login.JSON
 import com.example.androidclient.ui.login.LOGIN
 import com.example.androidclient.ui.login.PASSWORD
@@ -37,16 +36,12 @@ class AddPublicationActivity : AppCompatActivity() {
         val author = findViewById<TextView>(R.id.author_setter).text.toString()
         val publisher = findViewById<TextView>(R.id.publisher_setter).text.toString()
         val year = findViewById<TextView>(R.id.year_setter).text.toString()
-        //TODO validate data!
         if (title == "" || author == "" || publisher == "" || year == "") {
             return
         }
         val pubsJSON = prepareJSON(title, author, publisher, year)
         sendJSONRequest(pubsJSON)
-        //Dodaj do json i wyślij żądanie o dodanie na serwer
-        val intent = Intent(this, PublicationsActivity::class.java).apply {
-            //putExtra(JSON, json)
-        }
+        val intent = Intent(this, PublicationsActivity::class.java)
         startActivity(intent)
         finish()
     }
@@ -68,15 +63,12 @@ class AddPublicationActivity : AppCompatActivity() {
     }
 
     private fun sendJSONRequest(jsonObject: JSONObject) {
-        val manager = SelfSignedManager()
         val requestQueue =
-            RequestQueueSingleton.getInstance(this.applicationContext, manager.makeHurlStack())
+            RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
         val url = "https://10.0.2.2/publications"
         val jsonObjectRequest = JsonObjectRequest(Request.Method.POST, url, jsonObject, null,
-            Response.ErrorListener {
-
-            })
+            Response.ErrorListener {})
         requestQueue.add(jsonObjectRequest)
     }
 }
