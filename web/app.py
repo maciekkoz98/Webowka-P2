@@ -104,8 +104,8 @@ def prepare_publications(pub_json):
     for i in range(0, len(publications)):
         publications[i] = publications[i].split(":_+")
         try:
-            dwn_link = links[str(i) + ":_+download"]['href']
-            del_link = links[str(i) + ":_+delete"]['href']
+            dwn_link = links[publications[i][0] + ":_+download"]['href']
+            del_link = links[publications[i][0] + ":_+delete"]['href']
             publications[i].append(dwn_link)
             file_name = dwn_link[39:]
             publications[i].append(file_name)
