@@ -17,28 +17,6 @@
 
 <h1>Fileshare</h1>
 <div class="list">
-    <h2>Lista załadowanych plików:</h2>
-    {% block filenames %}
-    <ul>
-        {% for filename in filelist %}
-        <form class="inLine" action="/fileDownload" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="link" value="{{FILE}}/download/{{filename}}" />
-            <button class="asLink" type="submit">
-                {{filename}}
-            </button>
-        </form>
-        {% endfor %}
-    </ul>
-    {% endblock %}
-</div>
-<form action="{{FILE}}/upload" method="POST" enctype="multipart/form-data">
-    <h2>Prześlij plik:</h2>
-    <input type="file" name="file" required />
-    <input type="hidden" name="token" value="{{upload_token}}" />
-    <input type="hidden" name="callback" value="{{WEB}}/callback" />
-    <input type="submit" />
-</form>
-<div class="list">
     <h2>Lista publikacji:</h2>
     <table class="table">
         <thead>
