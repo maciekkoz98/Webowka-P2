@@ -21,7 +21,7 @@
     {% block filenames %}
     <ul>
         {% for filename in filelist %}
-        <form class="inLine" action="/downloadFile" method="POST" enctype="multipart/form-data">
+        <form class="inLine" action="/fileDownload" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="link" value="{{FILE}}/download/{{filename}}" />
             <button class="asLink" type="submit">
                 {{filename}}
@@ -70,7 +70,7 @@
                 {% if publication[5] %}
                 <td>
                     <div class="inLine">
-                        <form class="inLine" action="/downloadFile" method="POST" enctype="multipart/form-data">
+                        <form class="inLine" action="/fileDownload" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="link" value="{{publication[5]}}" />
                             <button class="asLink" type="submit">
                                 {{publication[6]}}

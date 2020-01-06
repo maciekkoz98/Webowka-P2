@@ -11,10 +11,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.example.androidclient.R
 import com.example.androidclient.data.RequestQueueSingleton
 import kotlinx.android.synthetic.main.pubs_view.view.*
+import org.json.JSONObject
 
 class PublicationsAdapter(
     private val parent: PublicationsActivity,
@@ -23,6 +25,7 @@ class PublicationsAdapter(
 ) :
     RecyclerView.Adapter<PubsViewHolder>(), ViewHolderClickListener {
     var selectedID: Int = -1
+    private var tappedID: Int = -1
     private lateinit var requestQueue: RequestQueue
 
     override fun onLongTap(index: Int) {
@@ -42,8 +45,10 @@ class PublicationsAdapter(
             setIDSelected(index)
             parent.stopActionMode()
         } else {
-            if (pubsDataSet[index].filename != null)
+            if (pubsDataSet[index].filename != null && selectedID == -1) {
+                tappedID = index
                 downloadSelectedFile()
+            }
         }
     }
 
@@ -133,7 +138,27 @@ class PublicationsAdapter(
     }
 
     fun uploadFile() {
+        parent.uploadFile()
+    }
 
+    fun updatePublication(pub: Publication, username: String, hashedPassword: String) {
+        val index = pubsDataSet.indexOf(pub)
+        val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"
+        val jsonObjectRequest =
+            JsonObjectRequest(Request.Method.GET, url, null, Response.Listener { response ->
+                val json = JSONObject(response.toString())
+                val links = json.getString("_links")
+                val linksMap = parent.prepareMap(links)
+                pubsDataSet[index].filename = linksMap["${pub.id}:_+filename"]
+                pubsDataSet[index].downloadLink = linksMap["${pub.id}:_+download"]
+                pubsDataSet[index].deleteLink = linksMap["${pub.id}:_+delete"]
+                setIDSelected(selectedID)
+                notifyItemChanged(index)
+            }, Response.ErrorListener {
+                makeErrorToast()
+                setIDSelected(selectedID)
+            })
+        requestQueue.add(jsonObjectRequest)
     }
 
     private fun makeErrorToast() {
@@ -148,5 +173,11 @@ class PublicationsAdapter(
 
     fun getSelectedPublication(): Publication {
         return pubsDataSet[selectedID]
+    }
+
+    fun getTappedPublication(): Publication {
+        val pub = pubsDataSet[tappedID]
+        tappedID = -1
+        return pub
     }
 }

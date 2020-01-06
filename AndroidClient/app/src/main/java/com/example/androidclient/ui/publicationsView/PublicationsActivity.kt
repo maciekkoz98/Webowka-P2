@@ -1,12 +1,14 @@
 package com.example.androidclient.ui.publicationsView
 
 import android.Manifest
+import android.app.Activity
 import android.app.DownloadManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -18,6 +20,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.example.androidclient.R
+import com.example.androidclient.data.FileSendRequestVolley
 import com.example.androidclient.data.RequestQueueSingleton
 import com.example.androidclient.ui.addPublicationView.AddPublicationActivity
 import com.example.androidclient.ui.login.JSON
@@ -32,6 +35,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 const val REQUEST_WRITE_EXTERNAL = 2137
+const val PICK_PDF_FILE = 2
 
 class PublicationsActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
@@ -99,15 +103,15 @@ class PublicationsActivity : AppCompatActivity() {
             val pubArray = publicationJSON.split(":_+")
             val publication =
                 Publication(pubArray[0].toInt(), pubArray[1], pubArray[2], pubArray[3], pubArray[4])
-            publication.filename = linksMap["$i:_+filename"]
-            publication.downloadLink = linksMap["$i:_+download"]
-            publication.deleteLink = linksMap["$i:_+delete"]
+            publication.filename = linksMap["${publication.id}:_+filename"]
+            publication.downloadLink = linksMap["${publication.id}:_+download"]
+            publication.deleteLink = linksMap["${publication.id}:_+delete"]
             publicationsArray.add(publication)
         }
         return publicationsArray
     }
 
-    private fun prepareMap(links: String): HashMap<String, String> {
+    fun prepareMap(links: String): HashMap<String, String> {
         val betterLinks = links.replace("\\/", "/")
         val linksArray = betterLinks.split("\"")
         val onlyLinks = ArrayList<String>()
@@ -115,16 +119,15 @@ class PublicationsActivity : AppCompatActivity() {
             onlyLinks.add(linksArray[i])
         }
         val map = HashMap<String, String>()
-        var index = 0
         for (i in 0 until onlyLinks.size step 3) {
             val key = onlyLinks[i]
+            val index = key[0]
             val link = onlyLinks[i + 2]
             if (key == "self") {
                 break
             } else if (key == "$index:_+download") {
                 val filename = link.substring(39)
                 map["$index:_+filename"] = filename
-                index += 1
             }
             map[key] = link
         }
@@ -180,27 +183,31 @@ class PublicationsActivity : AppCompatActivity() {
                 REQUEST_WRITE_EXTERNAL
             )
         } else {
-            val publication = viewAdapter.getSelectedPublication()
-            viewAdapter.onTap(viewAdapter.selectedID)
+            val publication: Publication
+            if (viewAdapter.selectedID != -1) {
+                publication = viewAdapter.getSelectedPublication()
+                viewAdapter.onTap(viewAdapter.selectedID)
+            } else {
+                publication = viewAdapter.getTappedPublication()
+            }
             println(publication.downloadLink)
             val token = getJWTToken(publication.filename)
-            val url = "https://10.0.2.2" + publication.downloadLink?.substring(29) + "?token=$token"
+            val url =
+                "https://10.0.2.2" + publication.downloadLink?.substring(29) + "?token=$token"
             println(url)
             val request =
                 DownloadManager.Request(Uri.parse(url))
             request.apply {
-                allowScanningByMediaScanner()
                 setTitle(publication.filename)
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                addRequestHeader("Content-Type", "multipart/form-data")
-                setMimeType("multipart/form-data")
+                setMimeType("application/pdf")
                 setDestinationInExternalPublicDir(
                     Environment.DIRECTORY_DOWNLOADS,
                     publication.filename
                 )
             }
             val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-            val downloadID = downloadManager.enqueue(request)
+            downloadManager.enqueue(request)
         }
     }
 
@@ -215,6 +222,64 @@ class PublicationsActivity : AppCompatActivity() {
         println(key)
         jwt.signWith(key)
         return jwt.compact()
+    }
+
+    fun uploadFile() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/pdf"
+        }
+        startActivityForResult(intent, PICK_PDF_FILE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        if (requestCode == PICK_PDF_FILE && resultCode == Activity.RESULT_OK) {
+            resultData?.data?.also { uri ->
+                val cursor = contentResolver.query(uri, null, null, null, null)
+                cursor?.moveToFirst()
+                val nameIndex = cursor?.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                val filename = cursor?.getString(nameIndex!!)
+                cursor?.close()
+                val fileStream = contentResolver.openInputStream(uri)
+                val fileBytes = ByteArray(fileStream!!.available())
+                fileStream.read(fileBytes)
+                fileStream.close()
+                val publication = viewAdapter.getSelectedPublication()
+                val url = "https://10.0.2.2/publications/${publication.id}"
+                val request =
+                    FileSendRequestVolley(url, Response.Listener {
+                        viewAdapter.updatePublication(publication, username, hashedPassword)
+                    }, Response.ErrorListener {
+                        val internetError = getString(R.string.internet_error)
+                        val dataSync = getString(R.string.data_sync_error)
+                        Toast.makeText(
+                            applicationContext,
+                            "$internetError\n$dataSync",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    })
+                request.paramsMap = prepareParamsMap()
+                request.dataMap = prepareDataMap(filename!!, fileBytes)
+                requestQueue.add(request)
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, resultData)
+    }
+
+    private fun prepareParamsMap(): Map<String, String> {
+        val map = HashMap<String, String>()
+        map["username"] = username
+        map["password"] = hashedPassword
+        return map
+    }
+
+    private fun prepareDataMap(
+        filename: String,
+        content: ByteArray
+    ): Map<String, FileSendRequestVolley.DataPart> {
+        val map = HashMap<String, FileSendRequestVolley.DataPart>()
+        map["file"] = FileSendRequestVolley.DataPart(filename, content, "application/pdf")
+        return map
     }
 
     override fun onRequestPermissionsResult(
