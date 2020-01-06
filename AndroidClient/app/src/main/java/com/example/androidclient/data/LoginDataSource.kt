@@ -12,7 +12,6 @@ class LoginDataSource {
 
     fun login(username: String, password: String): Result<LoggedInUser> {
         try {
-            // TODO: handle loggedInUser authentication
             if (username == "Jack") {
                 val hashedPassword = hashPassword(password)
                 if (hashedPassword == "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c") {
@@ -34,10 +33,6 @@ class LoginDataSource {
         val md = MessageDigest.getInstance("SHA-256")
         val bytes = md.digest(password.toByteArray())
         return bytes.fold("", { str, it -> str + "%02x".format(it) })
-    }
-
-    fun logout() {
-        // TODO: revoke authentication
     }
 }
 

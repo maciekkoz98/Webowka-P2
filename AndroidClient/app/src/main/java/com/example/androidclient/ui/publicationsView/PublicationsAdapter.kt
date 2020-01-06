@@ -43,6 +43,7 @@ class PublicationsAdapter(
     override fun onTap(index: Int) {
         if (selectedID == index) {
             setIDSelected(index)
+            tappedID = index
             parent.stopActionMode()
         } else {
             if (pubsDataSet[index].filename != null && selectedID == -1) {

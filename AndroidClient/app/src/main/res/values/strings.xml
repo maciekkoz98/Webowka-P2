@@ -28,4 +28,5 @@
     <string name="attach_file">Attach file</string>
     <string name="delete_file">Delete file</string>
     <string name="no_write_permission">Without this permission app cannot download files!</string>
+    <string name="logout">Logout</string>
 </resources>

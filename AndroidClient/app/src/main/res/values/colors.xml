@@ -5,4 +5,6 @@
     <color name="colorAccent">#D81B60</color>
     <color name="highlightedPub">#50BA90</color>
     <color name="defaultColor">#FAFAFA</color>
+    <color name="menuBackground">#E0E0E0</color>
+    <color name="iconColor">#737373</color>
 </resources>

@@ -28,7 +28,6 @@ class WithFileActionModeCallback(
                 return true
             }
             R.id.action_download -> {
-                //TODO handle downloading file
                 viewAdapter.downloadSelectedFile()
                 mode.finish()
                 return true
@@ -46,6 +45,9 @@ class WithFileActionModeCallback(
     }
 
     override fun onDestroyActionMode(mode: ActionMode) {
+        if (viewAdapter.selectedID != -1) {
+            viewAdapter.onTap(viewAdapter.selectedID)
+        }
     }
 
     override fun onPrepareActionMode(mode: ActionMode, menu: Menu?): Boolean {

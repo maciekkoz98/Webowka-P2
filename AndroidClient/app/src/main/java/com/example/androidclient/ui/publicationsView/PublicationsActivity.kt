@@ -9,6 +9,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.OpenableColumns
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -25,6 +27,7 @@ import com.example.androidclient.data.RequestQueueSingleton
 import com.example.androidclient.ui.addPublicationView.AddPublicationActivity
 import com.example.androidclient.ui.login.JSON
 import com.example.androidclient.ui.login.LOGIN
+import com.example.androidclient.ui.login.LoginActivity
 import com.example.androidclient.ui.login.PASSWORD
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
@@ -53,9 +56,6 @@ class PublicationsActivity : AppCompatActivity() {
         requestQueue =
             RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
-        //TODO do sth with username and pass when returning from view
-//        val user = intent.getStringExtra(LOGIN)
-//        val hashedPassword = intent.getStringExtra(PASSWORD)
         username = "Jack"
         hashedPassword = "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c"
         val json = intent.getStringExtra(JSON)
@@ -190,11 +190,9 @@ class PublicationsActivity : AppCompatActivity() {
             } else {
                 publication = viewAdapter.getTappedPublication()
             }
-            println(publication.downloadLink)
             val token = getJWTToken(publication.filename)
             val url =
                 "https://10.0.2.2" + publication.downloadLink?.substring(29) + "?token=$token"
-            println(url)
             val request =
                 DownloadManager.Request(Uri.parse(url))
             request.apply {
@@ -216,10 +214,8 @@ class PublicationsActivity : AppCompatActivity() {
         jwt.claim("file_id", filename)
         jwt.claim("action", "download")
         val date = Date().time + 30000
-        println(Date(date))
         jwt.setExpiration(Date(date))
         val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
-        println(key)
         jwt.signWith(key)
         return jwt.compact()
     }
@@ -244,7 +240,7 @@ class PublicationsActivity : AppCompatActivity() {
                 val fileBytes = ByteArray(fileStream!!.available())
                 fileStream.read(fileBytes)
                 fileStream.close()
-                val publication = viewAdapter.getSelectedPublication()
+                val publication = viewAdapter.getTappedPublication()
                 val url = "https://10.0.2.2/publications/${publication.id}"
                 val request =
                     FileSendRequestVolley(url, Response.Listener {
@@ -306,4 +302,17 @@ class PublicationsActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.logout_option, menu)
+        return true
+    }
+
+    fun logoutUser(menuItem: MenuItem) {
+        val intent = Intent(this, LoginActivity::class.java)
+        startActivity(intent)
+        setResult(Activity.RESULT_OK)
+        finish()
+    }
+
 }

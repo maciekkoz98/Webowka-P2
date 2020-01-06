@@ -18,8 +18,6 @@ class WithoutFileActionModeCallback(
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_attach_file -> {
-                //TODO
-                // adapter dodaje plik i ustawia publikację
                 viewAdapter.uploadFile()
                 mode.finish()
                 return true
@@ -42,6 +40,9 @@ class WithoutFileActionModeCallback(
     }
 
     override fun onDestroyActionMode(mode: ActionMode) {
+        if (viewAdapter.selectedID != -1) {
+            viewAdapter.onTap(viewAdapter.selectedID)
+        }
     }
 
     override fun onPrepareActionMode(mode: ActionMode, menu: Menu?): Boolean {
