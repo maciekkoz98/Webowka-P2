@@ -99,8 +99,8 @@ class PublicationsAdapter(
 
     override fun getItemCount() = pubsDataSet.size
 
-    fun deleteSelectedFile(username: String, hashedPassword: String) {
-        val publication = pubsDataSet[selectedID]
+    fun deleteSelectedFile(username: String, hashedPassword: String, pubID: Int) {
+        val publication = pubsDataSet[pubID]
         var deleteLink = publication.deleteLink
         deleteLink ?: return
         deleteLink =
@@ -110,26 +110,22 @@ class PublicationsAdapter(
                 publication.filename = null
                 publication.deleteLink = null
                 publication.downloadLink = null
-                notifyItemChanged(selectedID)
-                setIDSelected(selectedID)
+                notifyItemChanged(pubID)
             }, Response.ErrorListener {
                 makeErrorToast()
-                setIDSelected(selectedID)
             })
         requestQueue.add(stringRequest)
     }
 
-    fun deleteSelectedPublication(username: String, hashedPassword: String) {
-        val id = pubsDataSet[selectedID].id
+    fun deleteSelectedPublication(username: String, hashedPassword: String, pubID: Int) {
+        val id = pubsDataSet[pubID].id
         val url =
             "https://10.0.2.2/publications/delete/$id?username=$username&password=$hashedPassword"
         val stringRequest = StringRequest(Request.Method.GET, url, Response.Listener<String> {
-            pubsDataSet.removeAt(selectedID)
+            pubsDataSet.removeAt(pubID)
             notifyDataSetChanged()
-            setIDSelected(selectedID)
         }, Response.ErrorListener {
             makeErrorToast()
-            setIDSelected(selectedID)
         })
         requestQueue.add(stringRequest)
     }
@@ -153,11 +149,9 @@ class PublicationsAdapter(
                 pubsDataSet[index].filename = linksMap["${pub.id}:_+filename"]
                 pubsDataSet[index].downloadLink = linksMap["${pub.id}:_+download"]
                 pubsDataSet[index].deleteLink = linksMap["${pub.id}:_+delete"]
-                setIDSelected(selectedID)
                 notifyItemChanged(index)
             }, Response.ErrorListener {
                 makeErrorToast()
-                setIDSelected(selectedID)
             })
         requestQueue.add(jsonObjectRequest)
     }

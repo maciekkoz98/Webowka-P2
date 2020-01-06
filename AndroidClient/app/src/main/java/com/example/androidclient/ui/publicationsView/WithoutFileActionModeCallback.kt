@@ -23,7 +23,11 @@ class WithoutFileActionModeCallback(
                 return true
             }
             R.id.action_delete_publication -> {
-                viewAdapter.deleteSelectedPublication(username, hashedPassword)
+                viewAdapter.deleteSelectedPublication(
+                    username,
+                    hashedPassword,
+                    viewAdapter.selectedID
+                )
                 mode.finish()
                 return true
             }
