@@ -18,13 +18,13 @@ services:
       context: web
       dockerfile: Dockerfile
     volumes:
-      - ./web:/var/www/app
+      - ./web/app:/var/www/app
     depends_on:
       - redis1
 
   files:
     build:
-      context: web
+      context: files
       dockerfile: Dockerfile
     volumes:
       - ./files:/var/www/app

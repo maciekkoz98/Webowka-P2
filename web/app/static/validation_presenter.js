@@ -7,7 +7,7 @@ presenter = {
     model: data,
     onYearChange() {
         var yearNum = parseInt(this.year, 10);
-        if (isNaN(yearNum), yearNum < 2500 || yearNum > 0) {
+        if (isNaN(yearNum), yearNum < 0 || yearNum > 9999) {
             this.isYearErrorVisible = true;
         } else {
             this.isYearErrorVisible = false;

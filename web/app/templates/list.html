@@ -1,0 +1,106 @@
+<!doctype html>
+
+<head>
+    <title>Fileshare</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Krub&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+
+    <script defer src="/static/validation_view.js"></script>
+    <script defer src="/static/validation_presenter.js"></script>
+    <script defer src="/static/validation_binding.js"></script>
+</head>
+
+<h1>Fileshare</h1>
+<div class="list">
+    <h2>Lista publikacji:</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Tytuł</th>
+                <th scope="col">Autorzy</th>
+                <th scope="col">Wydawca</th>
+                <th scope="col">Rok wydania</th>
+                <th scope="col">Plik</th>
+                <th scope="col">Usuń publikację</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% block books %}
+            {% for publication in publications %}
+            <tr>
+                <td>
+                    <p class="pubInfo">{{publication[1]}}</p>
+                </td>
+                <td>
+                    <p class="pubInfo">{{publication[2]}}</p>
+                </td>
+                <td>
+                    <p class="pubInfo">{{publication[3]}}</p>
+                </td>
+                <td>
+                    <p class="pubInfo">{{publication[4]}}</p>
+                </td>
+                {% if publication[5] %}
+                <td>
+                    <div class="inLine">
+                        <form class="inLine" action="/fileDownload" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="link" value="{{publication[5]}}" />
+                            <button class="asLink" type="submit">
+                                {{publication[6]}}
+                            </button>
+                        </form>
+                        <form class="inLine" action="/delFile" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="link" value="{{publication[7]}}" />
+                            <button class="deleteFile" type="submit">
+                                Usuń plik
+                            </button>
+                        </form>
+                    </div>
+                </td>
+                {% else %}
+                <td>
+                    <form class="inLine" action="/sendToAPI" method="POST" enctype="multipart/form-data">
+                        <input class="small" type="file" name="file" required />
+                        <input class="small" type="submit" />
+                        <input type="hidden" name="username" value="{{username}}" />
+                        <input type="hidden" name="password" value="{{password}}" />
+                        <input type="hidden" name="pid" value="{{publication[0]}}" />
+                    </form>
+                </td>
+                {% endif %}
+                <td><a href="/deletePub?pid={{publication[0]}}"><button class="deletePub">Usuń
+                            publikację</button></a></td>
+            </tr>
+            {% endfor %}
+            {% endblock %}
+        </tbody>
+    </table>
+</div>
+<div>
+    <form name="addPubForm" action="/addPub" form method="POST">
+        <h2>Dodaj publikację:</h2>
+        <fieldset>
+            <label>Tytuł publikacji</label>
+            <input type="text" name="title" required />
+
+            <label>Autor publikacji</label>
+            <input type="text" name="author" required />
+
+            <label>Rok wydania</label>
+            <input type="text" name="year" required />
+
+            <label>Wydawca</label>
+            <input type="text" name="publisher" required />
+        </fieldset>
+
+        <input name="submit" type="submit" disabled />
+    </form>
+</div>
+
+<center><a href="/logout"><button>Wyloguj się</button></a></center>
+<br />
