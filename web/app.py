@@ -13,10 +13,12 @@ import redis
 import hashlib
 import requests
 import json
+from authlib.flask.client import OAuth
 
 load_dotenv(verbose=True)
 
 app = Flask(__name__, static_url_path="/static")
+oauth = OAuth(app)
 FILE = getenv("FILESHARE")
 WEB = getenv("WEB")
 SESSION_TIME = int(getenv("SESSION_TIME"))
@@ -26,13 +28,28 @@ JWT_SECRET = getenv("JWT_SECRET")
 redis_instance = redis.Redis(host="redis1", port=6379, db=0)
 redis_instance.set(
     "Jack", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
-
+auth0 = oauth.register(
+    'auth0',
+    client_id='IkBNSWsj6uC4c3WKMKQ6R4ngPH7PnW39',
+    client_secret='2vweJGJo1Gwf9mqMF8ETvQvnW2Ff4r9e7Y7J1TjiLk0TJEXHfdbLKEBVYFVks8Xn',
+    api_base_url='https://webowkap4.eu.auth0.com',
+    access_token_url='https://webowkap4.eu.auth0.com/oauth/token',
+    authorize_url='https://webowkap4.eu.auth0.com/authorize',
+    client_kwargs={
+        'scope': 'openid profile email',
+    }
+)
 
 @app.route('/')
 def index():
     session_id = request.cookies.get('session_id')
-    response = redirect("/list" if session_id else "/login")
-    return response
+    # response = redirect("/list" if session_id else "/login")
+    # return response
+    if session_id:
+        response = redirect("/list")
+        return response
+    else:
+        return render_template("login_oauth.html")
 
 
 @app.route('/login')
