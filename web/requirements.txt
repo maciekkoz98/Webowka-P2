@@ -1,0 +1,8 @@
+flask
+jinja2
+redis
+requests
+six
+authlib
+pyjwt
+python-dotenv
