@@ -6,6 +6,10 @@ from flask import make_response
 from flask import render_template
 from flask import Response
 from flask import jsonify
+from flask import session
+from flask import redirect
+from flask import url_for
+from functools import wraps
 from dotenv import load_dotenv
 from os import getenv
 import datetime
@@ -13,11 +17,13 @@ import redis
 import hashlib
 import requests
 import json
-from authlib.flask.client import OAuth
+from authlib.integrations.flask_client import OAuth
+from six.moves.urllib.parse import urlencode
 
 load_dotenv(verbose=True)
 
 app = Flask(__name__, static_url_path="/static")
+app.secret_key = 'twojastara'
 oauth = OAuth(app)
 FILE = getenv("FILESHARE")
 WEB = getenv("WEB")
@@ -27,7 +33,7 @@ JWT_SECRET = getenv("JWT_SECRET")
 
 redis_instance = redis.Redis(host="redis1", port=6379, db=0)
 redis_instance.set(
-    "Jack", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
+    "jack@pw.edu.pl", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
 auth0 = oauth.register(
     'auth0',
     client_id='IkBNSWsj6uC4c3WKMKQ6R4ngPH7PnW39',
@@ -40,60 +46,44 @@ auth0 = oauth.register(
     }
 )
 
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'profile' not in session:
+            return redirect('/')
+        return f(*args, **kwargs)
+    return decorated
+
+
 @app.route('/')
 def index():
-    session_id = request.cookies.get('session_id')
-    # response = redirect("/list" if session_id else "/login")
-    # return response
-    if session_id:
-        response = redirect("/list")
-        return response
-    else:
-        return render_template("login_oauth.html")
+    return render_template("login_oauth.html")
 
 
 @app.route('/login')
 def login():
-    error = request.args.get("error")
-    error_message = ""
-    if error == "Invalid login":
-        error_message = "Podany login jest nieprawidłowy"
-    elif error == "Invalid passwd":
-        error_message = "Podane hasło jest nieprawidłowe"
-    return render_template("login.html", error_message=error_message)
+    return auth0.authorize_redirect(redirect_uri='https://web.company.com/loginCallback')
 
 
-@app.route('/auth', methods=['POST'])
-def auth():
-    username = request.form.get('username')
-    passwd = request.form.get('passwd').encode()
-    passwd = hashlib.sha256(passwd).hexdigest()
-
-    response = make_response('', 303)
-    if redis_instance.exists(username):
-        redis_pass = redis_instance.get(username).decode()
-        if passwd == redis_pass:
-            session_id = str(uuid4())
-            redis_instance.set(username + "_session_id", session_id)
-            response.set_cookie("session_id", session_id,
-                                max_age=SESSION_TIME, httponly=True, secure=True, samesite='Strict')
-            response.set_cookie(
-                "username", username, max_age=SESSION_TIME, httponly=True, secure=True, samesite='Strict')
-            response.headers["Location"] = "/list"
-        else:
-            return redirect(f"/login?error=Invalid+passwd")
-    else:
-        return redirect(f"/login?error=Invalid+login")
-
-    return response
+@app.route('/loginCallback')
+def callback():
+    auth0.authorize_access_token()
+    resp = auth0.get('userinfo')
+    userinfo = resp.json()
+    session['jwt_payload'] = userinfo
+    session['profile'] = {
+        'user_id': userinfo['sub'],
+        'name': userinfo['name'],
+        'picture': userinfo['picture']
+    }
+    return redirect('/list')
 
 
 @app.route('/list')
+@requires_auth
 def files():
-    if not check_user():
-        return redirect("/login")
-
-    username = request.cookies.get("username")
+    username = session['profile']['name']
     upload_token = create_upload_token(JWT_SESSION_TIME).decode('ascii')
     list_token = create_list_token(10).decode('ascii')
     filelist_json = requests.post(
@@ -104,9 +94,8 @@ def files():
 
     publications = prepare_publications(pub_json)
     API = "https://filesapi.company.com/publications/"
-    password = redis_instance.get(username).decode()
     return render_template("list.html", filelist=fileslist, publications=publications,
-                           FILE=FILE, upload_token=upload_token, WEB=WEB, API=API, username=username, password=password)
+                           FILE=FILE, upload_token=upload_token, WEB=WEB, API=API)
 
 
 def get_api_url(user):
@@ -133,10 +122,8 @@ def prepare_publications(pub_json):
 
 
 @app.route('/callback')
-def callback():
-    if not check_user():
-        return redirect("/login")
-
+@requires_auth
+def callback_files():
     error = request.args.get("error")
     filename = request.args.get("fname")
     if error:
@@ -146,11 +133,9 @@ def callback():
 
 
 @app.route("/addPub", methods=["POST"])
+@requires_auth
 def add_pub():
-    if not check_user():
-        return redirect("/login")
-
-    username = request.cookies.get("username")
+    username = session['profile']['name']
     title = request.form.get("title")
     author = request.form.get("author")
     year = request.form.get("year")
@@ -166,27 +151,23 @@ def add_pub():
     }
     answer = requests.post("http://api:5000/publications", json=body)
     if (answer.status_code == 200):
-        return redirect("/list")
+        return redirectTo("/list")
     else:
         return ('nie ok', 400)
 
 
 @app.route('/logout')
 def logout():
-    response = redirect('/login')
-    username = request.cookies.get("username")
-    redis_instance.delete(username + "_session_id")
-    response.set_cookie("session_id", "INVALIDATE", max_age=-1)
-    response.set_cookie("username", "INVALIDATE", max_age=-1)
-    return response
+    session.clear()
+    params = {'returnTo': 'https://web.company.com/',
+              'client_id': 'IkBNSWsj6uC4c3WKMKQ6R4ngPH7PnW39'}
+    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
 
 @app.route('/addFileToPub')
+@requires_auth
 def show_form():
-    if not check_user():
-        return redirect("/login")
-
-    username = request.cookies.get("username")
+    username = session['profile']['name']
     pub_id = request.args.get("pid")
     password = redis_instance.get(username).decode()
     address = "http://api:5000/publications/" + pub_id
@@ -194,12 +175,10 @@ def show_form():
 
 
 @app.route("/sendToAPI", methods=["POST"])
+@requires_auth
 def attach_file():
-    if not check_user():
-        return redirect("/login")
-
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username = session['profile']['name']
+    password = redis_instance.get(username).decode()
     pub_id = request.form.get("pid")
     link = "http://api:5000/publications/" + pub_id
     file = request.files.get("file")
@@ -213,53 +192,50 @@ def attach_file():
 
     ans = requests.post(link, data=form_data, files=files)
     if ans.status_code == 200:
-        return redirect('/list')
+        return redirectTo('/list')
     else:
         return ("<h1>Web</h1>Bad request", 400)
 
 
 @app.route("/deletePub")
+@requires_auth
 def deletePub():
-    if not check_user():
-        redirect('/login')
     pub_id = request.args.get("pid")
     if pub_id is None:
-        redirect("/list")
+        redirectTo("/list")
 
-    username = request.cookies.get("username")
+    username = session['profile']['name']
     password = redis_instance.get(username).decode()
     link = "http://api:5000/publications/delete/" + pub_id + \
         "?username=" + username + "&password=" + password
     ans = requests.get(link)
     if ans.status_code == 200:
-        return redirect('/list')
+        return redirectTo('/list')
     else:
         return ("<h1>Web</h1>Bad request", 400)
 
 
 @app.route("/delFile", methods=["POST"])
+@requires_auth
 def delFile():
-    if not check_user():
-        return redirect('/login')
     link = request.form.get("link")
     link = "http://api:5000" + link[28:]
-    username = request.cookies.get("username")
+    username = session['profile']['name']
     password = redis_instance.get(username).decode()
     requests.get(link + "&username=" + username + "&password=" + password)
-    return redirect('/list')
+    return redirectTo('/list')
 
 
 @app.route("/fileDownload", methods=["POST"])
+@requires_auth
 def downloadFile():
-    if not check_user():
-        return redirect('/login')
     link = request.form.get("link")
     file_id = link[39:]
     token = create_download_token(file_id, 10).decode('ascii')
-    return redirect(link + '?token=' + token)
+    return redirectTo(link + '?token=' + token)
 
 
-def redirect(location):
+def redirectTo(location):
     response = make_response('', 303)
     response.headers["Location"] = location
     return response
@@ -279,17 +255,3 @@ def create_download_token(file_id, time):
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
     print(expiration, flush=True)
     return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "download", "file_id": file_id}, JWT_SECRET, "HS256")
-
-
-def check_user():
-    session_id = request.cookies.get("session_id")
-    username = request.cookies.get("username")
-    if username is None:
-        return False
-    redis_session = redis_instance.get(username + "_session_id")
-    if redis_session is None:
-        return False
-    redis_session = redis_session.decode()
-    if session_id != redis_session:
-        return False
-    return True

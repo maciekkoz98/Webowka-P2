@@ -12,7 +12,7 @@ class LoginDataSource {
 
     fun login(username: String, password: String): Result<LoggedInUser> {
         try {
-            if (username == "Jack") {
+            if (username == "jack@pw.edu.pl") {
                 val hashedPassword = hashPassword(password)
                 if (hashedPassword == "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c") {
                     val loggedUser =

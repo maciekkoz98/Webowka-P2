@@ -1,4 +1,4 @@
-# ,,Projektowanie aplikacji webowych'' Project 2 oraz 3
+# ,,Projektowanie aplikacji webowych'' Project 2, Project 3, Project 4
 
 ## Project 2
 ### Setup
@@ -53,4 +53,12 @@ To login to the app please use the same credentials as in the web app.
 App provides the same possiblities as the web client. You can list, add and delete publications. You can also add and delete files attached to the publications.  
 In order to delete publication please hold it in the main view and click rubbish dump icon. To add a publication please click Floating Action Button. To download file press the publication in main view or long tap on publication and choose download file. To delete attached file long tap the publication and choose delete file button (crossed attachment icon).  
 
-There is a problem in downloading files attached by the web client. The reason of such behaviour is not known.
+There is a problem in downloading files attached by the web client. The reason of such behaviour is not known.  
+
+## Project P4
+### Web client login
+In order to log in you need to you use this credentials:  
+login: `jack@pw.edu.pl`  
+password: `Gwiazdor!`  
+
+In the login page I used css, pictures from auth0.com example.  

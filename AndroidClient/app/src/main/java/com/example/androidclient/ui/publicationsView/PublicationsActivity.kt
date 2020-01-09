@@ -56,7 +56,7 @@ class PublicationsActivity : AppCompatActivity() {
         requestQueue =
             RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
-        username = "Jack"
+        username = "jack@pw.edu.pl"
         hashedPassword = "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c"
         val json = intent.getStringExtra(JSON)
         if (json == null) {

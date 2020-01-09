@@ -19,7 +19,7 @@ HAL(app)
 
 redis_db = redis.Redis(host="redis3", port=6379, db=0)
 redis_db.set(
-    "Jack", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
+    "jack@pw.edu.pl", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
 
 
 @app.route("/publications", methods=["POST", "GET"])

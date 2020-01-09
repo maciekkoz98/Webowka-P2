@@ -1,0 +1,25 @@
+<!doctype html>
+
+<head>
+    <title>Fileshare</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='loginAuthO.css') }}" rel="stylesheet" type="text/css">
+
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Krub&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+</head>
+
+<body class="home">
+    <div class="container">
+        <div class="login-page clearfix">
+            <div class="login-box auth0-box before">
+                <h1>web.company.com</h1>
+                <img src="https://i.cloudup.com/StzWWrY34s.png" />
+                <h3>Auth0 Authorization</h3>
+                <a id="qsLoginBtn" class="btn btn-primary btn-lg btn-login btn-block" href="/login">Log In</a>
+            </div>
+        </div>
+    </div>
+</body>
