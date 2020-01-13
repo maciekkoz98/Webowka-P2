@@ -1,14 +1,15 @@
 from jwt import encode
 from uuid import uuid4
-from flask import Flask
-from flask import request
-from flask import make_response
-from flask import render_template
-from flask import Response
-from flask import jsonify
-from flask import session
-from flask import redirect
-from flask import url_for
+from flask import (
+    Flask,
+    request,
+    make_response,
+    render_template,
+    Response,
+    jsonify,
+    session,
+    redirect,
+    url_for)
 from functools import wraps
 from dotenv import load_dotenv
 from os import getenv
@@ -22,10 +23,11 @@ from six.moves.urllib.parse import urlencode
 
 load_dotenv(verbose=True)
 
+redis_instance = redis.Redis(host="redis1", port=6379, db=0)
+
 app = Flask(__name__, static_url_path="/static")
 app.secret_key = 'twojastara'
 oauth = OAuth(app)
-FILE = getenv("FILESHARE")
 WEB = getenv("WEB")
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv("JWT_SESSION_TIME"))
@@ -42,6 +44,13 @@ auth0 = oauth.register(
         'scope': 'openid profile email',
     }
 )
+
+
+def event_stream():
+    pubsub = redis_instance.pubsub(ignore_subscribe_messages=True)
+    pubsub.subscribe('publications')
+    for message in pubsub.listen():
+        return 'data: %s\n\n' % message['data'].decode()
 
 
 def requires_auth(f):
@@ -81,11 +90,6 @@ def callback():
 @requires_auth
 def files():
     username = session['profile']['name']
-    upload_token = create_upload_token(JWT_SESSION_TIME).decode('ascii')
-    list_token = create_list_token(10).decode('ascii')
-    filelist_json = requests.post(
-        "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
-    fileslist = filelist_json['files']
     api_url = get_api_url(username)
     pubs_token = create_list_pubs_token().decode('ascii')
     pub_json = requests.get(
@@ -93,9 +97,7 @@ def files():
     pub_json = pub_json.json()
 
     publications = prepare_publications(pub_json)
-    API = "https://filesapi.company.com/publications/"
-    return render_template("list.html", filelist=fileslist, publications=publications,
-                           FILE=FILE, upload_token=upload_token, WEB=WEB, API=API)
+    return render_template("list.html", publications=publications)
 
 
 def get_api_url(user):
@@ -151,9 +153,15 @@ def add_pub():
     answer = requests.post("http://api:5000/publications",
                            json=body, headers={'Authorization': 'Bearer ' + token})
     if (answer.status_code == 200):
+        redis_instance.publish('publications', title)
         return redirectTo("/list")
     else:
         return ('nie ok', 400)
+
+
+@app.route('/stream')
+def stream():
+    return Response(event_stream(), mimetype="text/event-stream")
 
 
 @app.route('/logout')
@@ -228,16 +236,6 @@ def redirectTo(location):
     response = make_response('', 303)
     response.headers["Location"] = location
     return response
-
-
-def create_list_token(time):
-    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
-    return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "list"}, JWT_SECRET, "HS256")
-
-
-def create_upload_token(time):
-    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
-    return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "upload"}, JWT_SECRET, "HS256")
 
 
 def create_download_token(file_id, time):

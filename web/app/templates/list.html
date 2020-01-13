@@ -10,12 +10,15 @@
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css">
     <link href='https://fonts.googleapis.com/css?family=Krub&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="/static/handlePopups.js"></script>
     <script defer src="/static/validation_view.js"></script>
     <script defer src="/static/validation_presenter.js"></script>
     <script defer src="/static/validation_binding.js"></script>
 </head>
 
 <h1>Fileshare</h1>
+<pre id="out"></pre>
 <div class="list">
     <h2>Lista publikacji:</h2>
     <table class="table">

@@ -62,3 +62,12 @@ login: `jack@pw.edu.pl`
 password: `Gwiazdor!`  
 
 In the login page I used css, pictures from auth0.com example.  
+
+#### Notifications:
+To handle notifications I am using code from petronetto/flask-redis-realtime-chat:  
+[Repository on GitHub](https://github.com/petronetto/flask-redis-realtime-chat)  
+Included licence is taken from there.  
+
+#### Android Client
+Because of masive changes in the client's authentication Android app is not able to be authenticated properly. This app is not working now.  
+App needs also some refactoring as it's not build with [Best practices](https://developer.android.com/guide/components/activities/activity-lifecycle)  

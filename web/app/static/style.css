@@ -23,7 +23,7 @@ h2 {
     margin: 0 0 30px 0;
 }
 
-form, div.list {
+form, div.list, pre.visible {
     margin: 10px auto;
     padding: 10px 20px;
     background-color: #D9CAB3;
@@ -124,7 +124,7 @@ button {
 }
 
 @media screen and (min-width:480px) {
-    form {
+    form, pre {
         max-width: 480px;
     }
 }
