@@ -31,9 +31,6 @@ SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv("JWT_SESSION_TIME"))
 JWT_SECRET = getenv("JWT_SECRET")
 
-redis_instance = redis.Redis(host="redis1", port=6379, db=0)
-redis_instance.set(
-    "jack@pw.edu.pl", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
 auth0 = oauth.register(
     'auth0',
     client_id='IkBNSWsj6uC4c3WKMKQ6R4ngPH7PnW39',
@@ -90,7 +87,10 @@ def files():
         "http://files:5000/filelist", json={"token": list_token}, verify=False).json()
     fileslist = filelist_json['files']
     api_url = get_api_url(username)
-    pub_json = requests.get(api_url).json()
+    pubs_token = create_list_pubs_token().decode('ascii')
+    pub_json = requests.get(
+        api_url, headers={'Authorization': 'Bearer ' + pubs_token})
+    pub_json = pub_json.json()
 
     publications = prepare_publications(pub_json)
     API = "https://filesapi.company.com/publications/"
@@ -100,8 +100,7 @@ def files():
 
 def get_api_url(user):
     url = "http://api:5000/publications"
-    password = redis_instance.get(user).decode()
-    return url + "?username=" + user + "&password=" + password
+    return url + "?username=" + user
 
 
 def prepare_publications(pub_json):
@@ -140,16 +139,17 @@ def add_pub():
     author = request.form.get("author")
     year = request.form.get("year")
     publisher = request.form.get("publisher")
-    password = redis_instance.get(username).decode()
     body = {
         "title": title,
         "author": author,
         "year": year,
         "publisher": publisher,
-        "username": username,
-        "password": password
+        "username": username
     }
-    answer = requests.post("http://api:5000/publications", json=body)
+    token = create_add_pub_token(
+        title+author+year+publisher).decode('ascii')
+    answer = requests.post("http://api:5000/publications",
+                           json=body, headers={'Authorization': 'Bearer ' + token})
     if (answer.status_code == 200):
         return redirectTo("/list")
     else:
@@ -164,33 +164,22 @@ def logout():
     return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
 
-@app.route('/addFileToPub')
-@requires_auth
-def show_form():
-    username = session['profile']['name']
-    pub_id = request.args.get("pid")
-    password = redis_instance.get(username).decode()
-    address = "http://api:5000/publications/" + pub_id
-    return render_template("fileForm.html", API=address, username=username, password=password)
-
-
 @app.route("/sendToAPI", methods=["POST"])
 @requires_auth
 def attach_file():
     username = session['profile']['name']
-    password = redis_instance.get(username).decode()
     pub_id = request.form.get("pid")
     link = "http://api:5000/publications/" + pub_id
     file = request.files.get("file")
     form_data = {
         "username": username,
-        "password": password,
     }
     files = {
         "file": (file.filename, file)
     }
-
-    ans = requests.post(link, data=form_data, files=files)
+    token = create_add_file_token(file.filename).decode('ascii')
+    ans = requests.post(link, files=files, data=form_data, headers={
+                        'Authorization': 'Bearer ' + token})
     if ans.status_code == 200:
         return redirectTo('/list')
     else:
@@ -205,10 +194,9 @@ def deletePub():
         redirectTo("/list")
 
     username = session['profile']['name']
-    password = redis_instance.get(username).decode()
-    link = "http://api:5000/publications/delete/" + pub_id + \
-        "?username=" + username + "&password=" + password
-    ans = requests.get(link)
+    token = create_delete_pub_token(pub_id).decode('ascii')
+    link = "http://api:5000/publications/delete/" + pub_id + "?username=" + username
+    ans = requests.get(link, headers={'Authorization': 'Bearer ' + token})
     if ans.status_code == 200:
         return redirectTo('/list')
     else:
@@ -221,8 +209,9 @@ def delFile():
     link = request.form.get("link")
     link = "http://api:5000" + link[28:]
     username = session['profile']['name']
-    password = redis_instance.get(username).decode()
-    requests.get(link + "&username=" + username + "&password=" + password)
+    token = create_delete_file_token().decode('ascii')
+    requests.get(link+"&username="+username,
+                 headers={'Authorization': 'Bearer ' + token})
     return redirectTo('/list')
 
 
@@ -253,5 +242,29 @@ def create_upload_token(time):
 
 def create_download_token(file_id, time):
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
-    print(expiration, flush=True)
     return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "download", "file_id": file_id}, JWT_SECRET, "HS256")
+
+
+def create_add_pub_token(publication):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=30)
+    return encode({"iss": 'filesapi.company.com', "exp": expiration, "action": "addPub", "publication": publication}, JWT_SECRET, "HS256")
+
+
+def create_list_pubs_token():
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=30)
+    return encode({"iss": 'filesapi.company.com', "exp": expiration, "action": "listPubs"}, JWT_SECRET, "HS256")
+
+
+def create_add_file_token(filename):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=30)
+    return encode({"iss": 'filesapi.company.com', "exp": expiration, "action": "addFile", "filename": filename}, JWT_SECRET, "HS256")
+
+
+def create_delete_file_token():
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=30)
+    return encode({"iss": 'filesapi.company.com', "exp": expiration, "action": "deleteFile"}, JWT_SECRET, "HS256")
+
+
+def create_delete_pub_token(pid):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=30)
+    return encode({"iss": 'filesapi.company.com', "exp": expiration, "action": "deletePub", "pubID": pid}, JWT_SECRET, "HS256")

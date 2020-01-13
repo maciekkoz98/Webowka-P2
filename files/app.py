@@ -53,12 +53,10 @@ def download(fid):
 
     index = 0
     for name in redis_db.lrange("filenames", 0, redis_db.llen("filenames")):
-        print(name.decode() + " , " + fid)
         if name.decode() == fid:
             break
         index += 1
 
-    print(index, flush=True)
     response = make_response(redis_db.lindex("files", index), 200)
     response.headers['Content-Type'] = "multipart/form-data"
     return response

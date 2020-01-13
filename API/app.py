@@ -1,4 +1,4 @@
-from jwt import encode, InvalidTokenError
+from jwt import encode, decode, InvalidTokenError
 from flask import Flask, request
 from flask import jsonify
 from flask_hal import document, HAL, link
@@ -18,8 +18,6 @@ app = Flask(__name__)
 HAL(app)
 
 redis_db = redis.Redis(host="redis3", port=6379, db=0)
-redis_db.set(
-    "jack@pw.edu.pl", "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c")
 
 
 @app.route("/publications", methods=["POST", "GET"])
@@ -27,33 +25,40 @@ def handle_pubs():
     if request.method == 'POST':
         if request.is_json:
             json = request.get_json()
-            username = json['username']
-            password = json['password']
-            if username is None or password is None:
-                return('<h1>FilesApi</h1>No login data', 401)
             title = json["title"]
             author = json["author"]
             publisher = json["publisher"]
             year = json['year']
+            username = json['username']
+            auth = request.headers.get('Authorization')
+            if(auth is None):
+                return('<h1>Files API</h1>No token provided', 401)
+            auth = auth.split(" ")
+            auth = auth[1]
+            auth_result = check_token(auth)
+            if not auth_result:
+                return('<h1>Files API</h1>Invalid token', 401)
             if title is None or author is None or publisher is None or year is None:
                 return('<h1>FilesApi</h1>No needed data', 400)
-            if redis_db.exists(username) and redis_db.get(username).decode() == password:
-                id = prepare_id(username)
-                redis_db.rpush("publications:_+" + username,
-                               title + ":_+" + id)
-                redis_db.set("publications:_+" + username + ":_+" + id,
-                             id + ":_+" + title + ":_+" + author + ":_+" + publisher + ":_+" + year)
-                return ('OK', 200)
-            else:
-                return('<h1>Files API</h1>Invalid login data', 401)
+            if auth_result != title+author+year+publisher:
+                return('<h1>FilesApi</h1>Invalid token (bad publication data)', 401)
+            id = prepare_id(username)
+            redis_db.rpush("publications:_+" + username,
+                           title + ":_+" + id)
+            redis_db.set("publications:_+" + username + ":_+" + id,
+                         id + ":_+" + title + ":_+" + author + ":_+" + publisher + ":_+" + year)
+            return ('OK', 200)
         else:
             return('<h1>Files API</h1>Bad request', 400)
     else:
-        username = request.args.get("username")
-        password = request.args.get("password")
-        if username == None or password == None:
-            return('<h1>FilesApi</h1>No login data', 401)
-        if redis_db.exists(username) and redis_db.get(username).decode() == password:
+        auth = request.headers.get('Authorization')
+        if(auth is None):
+            return('<h1>Files API</h1>No token provided', 401)
+        auth = auth.split(" ")
+        auth = auth[1]
+        auth_result = check_token(auth)
+        if auth:
+            username = request.args.get("username")
             publications = []
             links = Collection()
             for title in redis_db.lrange("publications:_+" + username, 0, redis_db.llen("publications:_+" + username)):
@@ -75,7 +80,7 @@ def handle_pubs():
 
             return document.Document(data=json, links=links)
         else:
-            return('<h1>Files API</h1>Invalid login data', 401)
+            return('<h1>Files API</h1>Invalid token provided', 401)
 
 
 def prepare_id(username):
@@ -99,13 +104,16 @@ def prepare_publication(data):
 @app.route("/publications/<pub_id>", methods=["POST"])
 def post_pub(pub_id):
     username = request.form.get("username")
-    password = request.form.get("password")
-    if username is None or password is None:
-        return('<h1>FilesApi</h1>No login data', 401)
-    if redis_db.exists(username) and redis_db.get(username).decode() == password:
-        pub_id = str(pub_id)
-        file = request.files.get("file")
-        filename = file.filename
+    pub_id = str(pub_id)
+    file = request.files.get("file")
+    filename = file.filename
+    auth = request.headers.get('Authorization')
+    if(auth is None):
+        return('<h1>Files API</h1>No token provided', 401)
+    auth = auth.split(" ")
+    auth = auth[1]
+    auth_result = check_token(auth)
+    if auth_result == filename:
         download_link = 'https://fileshare.company.com/download/' + filename
         delete_link = 'https://filesapi.company.com/publications/' + \
             filename + '/delete?pid=' + pub_id
@@ -126,7 +134,7 @@ def post_pub(pub_id):
         else:
             return('OK', 200)
     else:
-        return('<h1>Files API</h1>Invalid login data', 401)
+        return('<h1>Files API</h1>Invalid token (bad payload)', 401)
 
 
 def upload_file(file, filename):
@@ -145,11 +153,14 @@ def upload_file(file, filename):
 
 @app.route("/publications/<file_id>/delete")
 def delete_file(file_id):
-    username = request.args.get("username")
-    password = request.args.get("password")
-    if username is None or password is None:
-        return('<h1>FilesApi</h1>No login data', 401)
-    if redis_db.exists(username) and redis_db.get(username).decode() == password:
+    auth = request.headers.get('Authorization')
+    if(auth is None):
+        return('<h1>Files API</h1>No token provided', 401)
+    auth = auth.split(" ")
+    auth = auth[1]
+    auth_result = check_token(auth)
+    if auth_result:
+        username = request.args.get("username")
         pub_id = request.args.get("pid")
         if not check_fid_pub(username, pub_id, file_id):
             return('<h1>API</h1>Cannot delete file. Bad request', 400)
@@ -167,7 +178,7 @@ def delete_file(file_id):
                      data)
         return ('<h1>Files API</h1>Succesfully deleted file: ' + file_id, 200)
     else:
-        return('<h1>Files API</h1>Invalid login data', 401)
+        return('<h1>Files API</h1>Invalid token provided', 401)
 
 
 def check_fid_pub(username, pub_id, file_id):
@@ -194,19 +205,24 @@ def check_fid_pub(username, pub_id, file_id):
 
 @app.route("/publications/delete/<pub_id>")
 def delete_publication(pub_id):
-    username = request.args.get("username")
-    password = request.args.get("password")
-    if username is None or password is None:
-        return('<h1>FilesApi</h1>No login data', 401)
-    if redis_db.exists(username) and redis_db.get(username).decode() == password:
+    auth = request.headers.get('Authorization')
+    if(auth is None):
+        return('<h1>Files API</h1>No token provided', 401)
+    auth = auth.split(" ")
+    auth = auth[1]
+    auth_result = check_token(auth)
+    if auth_result == pub_id:
+        username = request.args.get("username")
         data = redis_db.get("publications:_+" + username + ":_+" + pub_id)
         if data is None:
             return ('<h1>FilesApi</h1>Publication not found', 404)
         data = data.decode().split(":_+")
         if len(data) > 5:
             url = "http://api:5000" + data[6][28:]
-            url = url + "&username=" + username + "&password=" + password
-            ans = requests.get(url)
+            url = url + "&username=" + username
+            token = create_delete_file_token().decode('ascii')
+            ans = requests.get(
+                url, headers={'Authorization': 'Bearer ' + token})
             if ans.status_code == 400:
                 return("Error", 400)
             elif ans.status_code == 404:
@@ -233,3 +249,28 @@ def create_upload_token():
 def create_delete_token(file_id):
     expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_TIME)
     return encode({"iss": "fileshare.company.com", "exp": expiration, "action": "delete", "file_id": file_id}, JWT_SECRET, "HS256")
+
+
+def create_delete_file_token():
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=30)
+    return encode({"iss": 'filesapi.company.com', "exp": expiration, "action": "deleteFile"}, JWT_SECRET, "HS256")
+
+
+def check_token(token):
+    try:
+        payload = decode(token, JWT_SECRET)
+        try:
+            if payload['action'] == "addPub":
+                return payload['publication']
+            elif payload['action'] == "addFile":
+                return payload['filename']
+            elif payload['action'] == 'listPubs' or payload['action'] == 'deleteFile':
+                return True
+            elif payload['action'] == 'deletePub':
+                return payload['pubID']
+            else:
+                return False
+        except KeyError:
+            return False
+    except InvalidTokenError:
+        return False
