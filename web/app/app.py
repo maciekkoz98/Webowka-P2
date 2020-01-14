@@ -48,7 +48,7 @@ auth0 = oauth.register(
 
 def event_stream():
     pubsub = redis_instance.pubsub(ignore_subscribe_messages=True)
-    pubsub.subscribe('publications')
+    pubsub.subscribe('publications:'+session['profile']['name'])
     for message in pubsub.listen():
         return 'data: %s\n\n' % message['data'].decode()
 
@@ -153,7 +153,7 @@ def add_pub():
     answer = requests.post("http://api:5000/publications",
                            json=body, headers={'Authorization': 'Bearer ' + token})
     if (answer.status_code == 200):
-        redis_instance.publish('publications', title)
+        redis_instance.publish('publications:'+username, title)
         return redirectTo("/list")
     else:
         return ('nie ok', 400)
