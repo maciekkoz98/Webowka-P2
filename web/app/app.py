@@ -46,11 +46,16 @@ auth0 = oauth.register(
 )
 
 
-def event_stream():
-    pubsub = redis_instance.pubsub(ignore_subscribe_messages=True)
-    pubsub.subscribe('publications:'+session['profile']['name'])
-    for message in pubsub.listen():
-        return 'data: %s\n\n' % message['data'].decode()
+@app.route('/stream')
+def stream():
+    username = session['profile']['name']
+
+    def event_stream():
+        pubsub = redis_instance.pubsub(ignore_subscribe_messages=True)
+        pubsub.subscribe('publications:' + username)
+        for message in pubsub.listen():
+            yield 'data: %s\n\n' % message['data'].decode()
+    return Response(event_stream(), mimetype="text/event-stream")
 
 
 def requires_auth(f):
@@ -157,11 +162,6 @@ def add_pub():
         return redirectTo("/list")
     else:
         return ('nie ok', 400)
-
-
-@app.route('/stream')
-def stream():
-    return Response(event_stream(), mimetype="text/event-stream")
 
 
 @app.route('/logout')
