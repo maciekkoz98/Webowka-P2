@@ -46,7 +46,17 @@ auth0 = oauth.register(
 )
 
 
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'profile' not in session:
+            return redirect('/')
+        return f(*args, **kwargs)
+    return decorated
+
+
 @app.route('/stream')
+@requires_auth
 def stream():
     username = session['profile']['name']
 
@@ -56,15 +66,6 @@ def stream():
         for message in pubsub.listen():
             yield 'data: %s\n\n' % message['data'].decode()
     return Response(event_stream(), mimetype="text/event-stream")
-
-
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'profile' not in session:
-            return redirect('/')
-        return f(*args, **kwargs)
-    return decorated
 
 
 @app.route('/')
