@@ -1,5 +1,11 @@
 # ,,Projektowanie aplikacji webowych'' Project 2, Project 3, Project 4
 
+Table of contents:  
+- [Project 2](#project-2)  
+- [Project 3](#project-3)  
+- [Project 4](#project-4)  
+
+
 ## Project 2
 ### Setup
 Before building the project with docker please rememeber to map site addresses to localhost.  
@@ -55,7 +61,7 @@ In order to delete publication please hold it in the main view and click rubbish
 
 There is a problem in downloading files attached by the web client. The reason of such behaviour is not known.  
 
-## Project P4
+## Project 4
 ### Web client login
 In order to log in you need to you use this credentials:  
 login: `jack@pw.edu.pl`  
