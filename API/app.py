@@ -140,13 +140,11 @@ def post_pub(pub_id):
 def upload_file(file, filename):
     form_url = "http://files:5000/upload"
     token = create_upload_token().decode('ascii')
-    form_data = {
-        "token": token,
-    }
     files = {
         "file": (filename, file)
     }
-    answer = requests.post(form_url, data=form_data, files=files)
+    answer = requests.post(form_url, files=files, headers={
+                           'Authorization': 'Bearer ' + token})
     file.close()
     return answer
 
@@ -166,7 +164,7 @@ def delete_file(file_id):
             return('<h1>API</h1>Cannot delete file. Bad request', 400)
         token = create_delete_token(file_id).decode('ascii')
         ans = requests.get("http://files:5000/delete/" +
-                           file_id + "?token=" + token)
+                           file_id, headers={'Authorization': 'Bearer ' + token})
         if ans.status_code == 404:
             return ('<h1>API</h1>Cannot delete file that not exists', 404)
         data = redis_db.get("publications:_+" + username +

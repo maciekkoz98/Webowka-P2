@@ -32,14 +32,19 @@ WEB = getenv("WEB")
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv("JWT_SESSION_TIME"))
 JWT_SECRET = getenv("JWT_SECRET")
+CLIENT_ID = getenv("CLIENT_ID")
+CLIENT_SECRET = getenv("CLIENT_SECRET")
+API_BASE_URL = getenv("API_BASE_URL")
+ACCESS_TOKEN_URL = getenv("ACCESS_TOKEN_URL")
+AUTHORIZE_URL = getenv("AUTHORIZE_URL")
 
 auth0 = oauth.register(
     'auth0',
-    client_id='IkBNSWsj6uC4c3WKMKQ6R4ngPH7PnW39',
-    client_secret='2vweJGJo1Gwf9mqMF8ETvQvnW2Ff4r9e7Y7J1TjiLk0TJEXHfdbLKEBVYFVks8Xn',
-    api_base_url='https://webowkap4.eu.auth0.com',
-    access_token_url='https://webowkap4.eu.auth0.com/oauth/token',
-    authorize_url='https://webowkap4.eu.auth0.com/authorize',
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    api_base_url=API_BASE_URL,
+    access_token_url=ACCESS_TOKEN_URL,
+    authorize_url=AUTHORIZE_URL,
     client_kwargs={
         'scope': 'openid profile email',
     }
@@ -126,17 +131,6 @@ def prepare_publications(pub_json):
         except KeyError:
             continue
     return publications
-
-
-@app.route('/callback')
-@requires_auth
-def callback_files():
-    error = request.args.get("error")
-    filename = request.args.get("fname")
-    if error:
-        return f"<h1>APP</h1> Upload failed: {error}", 400
-
-    return render_template("callback.html", filename=filename)
 
 
 @app.route("/addPub", methods=["POST"])

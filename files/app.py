@@ -19,7 +19,11 @@ redis_db = redis.Redis(host="redis2", port=6379, db=0)
 @app.route('/upload', methods=['POST'])
 def upload():
     file = request.files.get('file')
-    token = request.form.get("token")
+    auth = request.headers.get("Authorization")
+    if(auth is None):
+        return('<h1>Files API</h1>No token provided', 401)
+    auth = auth.split(" ")
+    token = auth[1]
     callback = request.form.get("callback")
 
     if file is None:
@@ -64,7 +68,11 @@ def download(fid):
 
 @app.route('/delete/<fid>')
 def delete(fid):
-    token = request.args.get('token')
+    auth = request.headers.get("Authorization")
+    if(auth is None):
+        return('<h1>Files API</h1>No token provided', 401)
+    auth = auth.split(" ")
+    token = auth[1]
     if len(fid) == 0:
         return (f'<h1>Fileshare</h1> No file specified', 404)
     if token is None:
