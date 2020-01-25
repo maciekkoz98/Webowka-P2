@@ -48,17 +48,17 @@
                 <td>
                     <p class="pubInfo">{{publication[4]}}</p>
                 </td>
-                {% if publication[5] %}
+                {% if publication[6] %}
                 <td>
                     <div class="inLine">
                         <form class="inLine" action="/fileDownload" method="POST" enctype="multipart/form-data">
-                            <input type="hidden" name="link" value="{{publication[5]}}" />
+                            <input type="hidden" name="link" value="{{publication[6]}}" />
                             <button class="asLink" type="submit">
-                                {{publication[6]}}
+                                {{publication[7]}}
                             </button>
                         </form>
                         <form class="inLine" action="/delFile" method="POST" enctype="multipart/form-data">
-                            <input type="hidden" name="link" value="{{publication[7]}}" />
+                            <input type="hidden" name="link" value="{{publication[8]}}" />
                             <button class="deleteFile" type="submit">
                                 Usuń plik
                             </button>
@@ -74,7 +74,7 @@
                     </form>
                 </td>
                 {% endif %}
-                <td><a href="/deletePub?pid={{publication[0]}}"><button class="deletePub">Usuń
+                <td><a href="/deletePub?pid={{publication[0]}}&link={{publication[5]}}"><button class="deletePub">Usuń
                             publikację</button></a></td>
             </tr>
             {% endfor %}

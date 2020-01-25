@@ -122,10 +122,12 @@ def prepare_publications(pub_json):
     for i in range(0, len(publications)):
         publications[i] = publications[i].split(":_+")
         try:
+            del_pub_link = links[publications[i][0] + ':_+deletePub']['href']
+            publications[i].append(del_pub_link)
             dwn_link = links[publications[i][0] + ":_+download"]['href']
             del_link = links[publications[i][0] + ":_+delete"]['href']
             publications[i].append(dwn_link)
-            file_name = dwn_link[39:]
+            file_name = dwn_link[10:]
             publications[i].append(file_name)
             publications[i].append(del_link)
         except KeyError:
@@ -171,6 +173,7 @@ def logout():
 @requires_auth
 def attach_file():
     username = session['profile']['name']
+    # TODO link here?
     pub_id = request.form.get("pid")
     link = "http://api:5000/publications/" + pub_id
     file = request.files.get("file")
@@ -195,10 +198,8 @@ def deletePub():
     pub_id = request.args.get("pid")
     if pub_id is None:
         redirectTo("/list")
-
-    username = session['profile']['name']
     token = create_delete_pub_token(pub_id).decode('ascii')
-    link = "http://api:5000/publications/delete/" + pub_id + "?username=" + username
+    link = "http://api:5000" + request.args.get("link")
     ans = requests.get(link, headers={'Authorization': 'Bearer ' + token})
     if ans.status_code == 200:
         return redirectTo('/list')
@@ -210,10 +211,10 @@ def deletePub():
 @requires_auth
 def delFile():
     link = request.form.get("link")
-    link = "http://api:5000" + link[28:]
+    link = "http://api:5000" + link
     username = session['profile']['name']
     token = create_delete_file_token().decode('ascii')
-    requests.get(link+"&username="+username,
+    requests.get(link+"?username="+username,
                  headers={'Authorization': 'Bearer ' + token})
     return redirectTo('/list')
 
@@ -221,7 +222,7 @@ def delFile():
 @app.route("/fileDownload", methods=["POST"])
 @requires_auth
 def downloadFile():
-    link = request.form.get("link")
+    link = 'https://fileshare.company.com' + request.form.get("link")
     file_id = link[39:]
     token = create_download_token(file_id, 10).decode('ascii')
     return redirectTo(link + '?token=' + token)

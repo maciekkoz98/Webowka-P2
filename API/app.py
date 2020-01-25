@@ -43,10 +43,11 @@ def handle_pubs():
             if auth_result != title+author+year+publisher:
                 return('<h1>FilesApi</h1>Invalid token (bad publication data)', 401)
             id = prepare_id(username)
+            delete_pub_link = '/publications/delete/' + id + '?username=' + username
             redis_db.rpush("publications:_+" + username,
                            title + ":_+" + id)
             redis_db.set("publications:_+" + username + ":_+" + id,
-                         id + ":_+" + title + ":_+" + author + ":_+" + publisher + ":_+" + year)
+                         id + ":_+" + title + ":_+" + author + ":_+" + publisher + ":_+" + year + ":_+" + delete_pub_link)
             return ('OK', 200)
         else:
             return('<h1>Files API</h1>Bad request', 400)
@@ -68,10 +69,12 @@ def handle_pubs():
                 data = redis_db.get("publications:_+" + username + ":_+" + id)
                 data = data.decode().split(":_+")
                 publication = prepare_publication(data)
-                if len(data) > 5:
-                    l = link.Link(data[0] + ":_+download", data[5])
+                pub_del = link.Link(data[0]+':_+deletePub', data[5])
+                links.append(pub_del)
+                if len(data) > 6:
+                    l = link.Link(data[0] + ":_+download", data[6])
                     links.append(l)
-                    d = link.Link(data[0] + ":_+delete", data[6])
+                    d = link.Link(data[0] + ":_+delete", data[7])
                     links.append(d)
                 publications.append(publication)
             json = {
@@ -114,15 +117,14 @@ def post_pub(pub_id):
     auth = auth[1]
     auth_result = check_token(auth)
     if auth_result == filename:
-        download_link = 'https://fileshare.company.com/download/' + filename
-        delete_link = 'https://filesapi.company.com/publications/' + \
-            filename + '/delete?pid=' + pub_id
+        download_link = '/download/' + filename
+        delete_file_link = '/publications/' + filename + '/delete/' + pub_id
         data = redis_db.get("publications:_+" + username +
                             ":_+" + pub_id)
         if data is None:
             return ('<h1>FilesApi</h1>Publication not found', 404)
         data = data.decode()
-        data = data + ":_+" + download_link + ":_+" + delete_link
+        data = data + ":_+" + download_link + ":_+" + delete_file_link
         redis_db.set("publications:_+" + username + ":_+" + pub_id,
                      data)
 
@@ -149,8 +151,8 @@ def upload_file(file, filename):
     return answer
 
 
-@app.route("/publications/<file_id>/delete")
-def delete_file(file_id):
+@app.route("/publications/<file_id>/delete/<pub_id>")
+def delete_file(file_id, pub_id):
     auth = request.headers.get('Authorization')
     if(auth is None):
         return('<h1>Files API</h1>No token provided', 401)
@@ -159,7 +161,6 @@ def delete_file(file_id):
     auth_result = check_token(auth)
     if auth_result:
         username = request.args.get("username")
-        pub_id = request.args.get("pid")
         if not check_fid_pub(username, pub_id, file_id):
             return('<h1>API</h1>Cannot delete file. Bad request', 400)
         token = create_delete_token(file_id).decode('ascii')
@@ -171,7 +172,9 @@ def delete_file(file_id):
                             ":_+" + pub_id)
         data = data.decode()
         data = data.split(":_+")
+        pub_del = data[5]
         data = prepare_publication(data)
+        data += ":_+" + pub_del
         redis_db.set("publications:_+" + username + ":_+" + pub_id,
                      data)
         return ('<h1>Files API</h1>Succesfully deleted file: ' + file_id, 200)
@@ -186,12 +189,12 @@ def check_fid_pub(username, pub_id, file_id):
         return False
     data = data.decode()
     data = data.split(":_+")
-    if len(data) < 7:
+    if len(data) < 8:
         return False
-    delete_link = data[6]
-    delete_link = delete_link[42:]
+    delete_link = data[7]
+    delete_link = delete_link[14:]
     if delete_link.find(file_id) == 0:
-        cut = len(file_id) + 12
+        cut = len(file_id) + 8
         pub_tocheck = delete_link[cut:]
         if pub_id == pub_tocheck:
             return True
@@ -215,9 +218,9 @@ def delete_publication(pub_id):
         if data is None:
             return ('<h1>FilesApi</h1>Publication not found', 404)
         data = data.decode().split(":_+")
-        if len(data) > 5:
-            url = "http://api:5000" + data[6][28:]
-            url = url + "&username=" + username
+        if len(data) > 6:
+            url = "http://api:5000" + data[7]
+            url = url + "?username=" + username
             token = create_delete_file_token().decode('ascii')
             ans = requests.get(
                 url, headers={'Authorization': 'Bearer ' + token})
