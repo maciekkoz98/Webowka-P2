@@ -21,6 +21,10 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.example.androidclient.R
 import com.example.androidclient.data.RequestQueueSingleton
 import com.example.androidclient.ui.publicationsView.PublicationsActivity
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
+import java.util.*
+import kotlin.collections.HashMap
 
 const val LOGIN = "com.example.androidclient.ui.login.LOGIN"
 const val PASSWORD = "com.example.androidclient.ui.login.PASSWORD"
@@ -120,8 +124,9 @@ class LoginActivity : AppCompatActivity() {
             RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
 
-        val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"
-        val jsonObjectRequest =
+        val token = createListToken();
+        val url = "https://10.0.2.2/publications?username=$username"
+        val jsonObjectRequest = object :
             JsonObjectRequest(Request.Method.GET, url, null, Response.Listener { response ->
                 loading.visibility = View.GONE
                 val pubsJSON = response.toString()
@@ -142,8 +147,25 @@ class LoginActivity : AppCompatActivity() {
                     "$internetError\n$tryAgainLater",
                     Toast.LENGTH_LONG
                 ).show()
-            })
+            }) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer $token"
+                return headers
+            }
+        }
+
         requestQueue.add(jsonObjectRequest)
+    }
+
+    private fun createListToken(): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "listPubs")
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
     }
 
     private fun showLoginFailed(@StringRes errorString: Int) {

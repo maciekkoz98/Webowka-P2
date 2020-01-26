@@ -14,7 +14,11 @@ import com.example.androidclient.ui.login.JSON
 import com.example.androidclient.ui.login.LOGIN
 import com.example.androidclient.ui.login.PASSWORD
 import com.example.androidclient.ui.publicationsView.PublicationsActivity
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
 import org.json.JSONObject
+import java.util.*
+import kotlin.collections.HashMap
 
 class AddPublicationActivity : AppCompatActivity() {
 
@@ -40,7 +44,8 @@ class AddPublicationActivity : AppCompatActivity() {
             return
         }
         val pubsJSON = prepareJSON(title, author, publisher, year)
-        sendJSONRequest(pubsJSON)
+        val token = createListToken(title + author + year + publisher)
+        sendJSONRequest(pubsJSON, token)
         val intent = Intent(this, PublicationsActivity::class.java)
         startActivity(intent)
         finish()
@@ -62,13 +67,31 @@ class AddPublicationActivity : AppCompatActivity() {
         return pubsJSON
     }
 
-    private fun sendJSONRequest(jsonObject: JSONObject) {
+    private fun sendJSONRequest(jsonObject: JSONObject, token: String) {
         val requestQueue =
             RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
         val url = "https://10.0.2.2/publications"
-        val jsonObjectRequest = JsonObjectRequest(Request.Method.POST, url, jsonObject, null,
-            Response.ErrorListener {})
+        val jsonObjectRequest =
+            object : JsonObjectRequest(Request.Method.POST, url, jsonObject, null,
+                Response.ErrorListener {}) {
+                override fun getHeaders(): MutableMap<String, String> {
+                    val headers = HashMap<String, String>()
+                    headers["Authorization"] = "Bearer $token"
+                    return headers
+                }
+            }
         requestQueue.add(jsonObjectRequest)
+    }
+
+    private fun createListToken(publication: String): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "addPub")
+        jwt.claim("publication", publication)
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
     }
 }

@@ -17,7 +17,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
@@ -60,7 +59,7 @@ class PublicationsActivity : AppCompatActivity() {
         hashedPassword = "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c"
         val json = intent.getStringExtra(JSON)
         if (json == null) {
-            getJSONFromAPI(username, hashedPassword)
+            getJSONFromAPI(username)
         } else {
             setRecyclerView(json)
         }
@@ -75,10 +74,11 @@ class PublicationsActivity : AppCompatActivity() {
         }
     }
 
-    private fun getJSONFromAPI(username: String?, hashedPassword: String?) {
-        val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"
-        val jsonObjectRequest =
-            JsonObjectRequest(Request.Method.GET, url, null, Response.Listener { response ->
+    private fun getJSONFromAPI(username: String?) {
+        val token = createListToken()
+        val url = "https://10.0.2.2/publications?username=$username"
+        val jsonObjectRequest = object :
+            JsonObjectRequest(Method.GET, url, null, Response.Listener { response ->
                 val pubsJSON = response.toString()
                 setRecyclerView(pubsJSON)
             }, Response.ErrorListener {
@@ -89,7 +89,13 @@ class PublicationsActivity : AppCompatActivity() {
                     "$internetError\n$tryAgainLater",
                     Toast.LENGTH_LONG
                 ).show()
-            })
+            }) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer $token"
+                return headers
+            }
+        }
         requestQueue.add(jsonObjectRequest)
     }
 
@@ -102,7 +108,13 @@ class PublicationsActivity : AppCompatActivity() {
             val publicationJSON = publications.get(i) as String
             val pubArray = publicationJSON.split(":_+")
             val publication =
-                Publication(pubArray[0].toInt(), pubArray[1], pubArray[2], pubArray[3], pubArray[4])
+                Publication(
+                    pubArray[0].toInt(),
+                    pubArray[1],
+                    pubArray[2],
+                    pubArray[3],
+                    pubArray[4]
+                )
             publication.filename = linksMap["${publication.id}:_+filename"]
             publication.downloadLink = linksMap["${publication.id}:_+download"]
             publication.deleteLink = linksMap["${publication.id}:_+delete"]
@@ -126,7 +138,7 @@ class PublicationsActivity : AppCompatActivity() {
             if (key == "self") {
                 break
             } else if (key == "$index:_+download") {
-                val filename = link.substring(39)
+                val filename = link.substring(10)
                 map["$index:_+filename"] = filename
             }
             map[key] = link
@@ -192,7 +204,7 @@ class PublicationsActivity : AppCompatActivity() {
             }
             val token = getJWTToken(publication.filename)
             val url =
-                "https://10.0.2.2" + publication.downloadLink?.substring(29) + "?token=$token"
+                "https://10.0.2.2${publication.downloadLink}?token=$token"
             val request =
                 DownloadManager.Request(Uri.parse(url))
             request.apply {
@@ -207,6 +219,16 @@ class PublicationsActivity : AppCompatActivity() {
             val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             downloadManager.enqueue(request)
         }
+    }
+
+    private fun createListToken(): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "listPubs")
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
     }
 
     private fun getJWTToken(filename: String?): String {
@@ -240,11 +262,12 @@ class PublicationsActivity : AppCompatActivity() {
                 val fileBytes = ByteArray(fileStream!!.available())
                 fileStream.read(fileBytes)
                 fileStream.close()
+                val token = createFileUploadToken(filename!!)
                 val publication = viewAdapter.getTappedPublication()
                 val url = "https://10.0.2.2/publications/${publication.id}"
                 val request =
                     FileSendRequestVolley(url, Response.Listener {
-                        viewAdapter.updatePublication(publication, username, hashedPassword)
+                        viewAdapter.updatePublication(publication, username)
                     }, Response.ErrorListener {
                         val internetError = getString(R.string.internet_error)
                         val dataSync = getString(R.string.data_sync_error)
@@ -315,4 +338,14 @@ class PublicationsActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun createFileUploadToken(filename: String): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "addFile")
+        jwt.claim("filename", filename)
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
+    }
 }

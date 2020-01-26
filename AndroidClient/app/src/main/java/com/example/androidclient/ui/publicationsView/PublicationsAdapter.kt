@@ -8,15 +8,17 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.example.androidclient.R
 import com.example.androidclient.data.RequestQueueSingleton
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
 import kotlinx.android.synthetic.main.pubs_view.view.*
 import org.json.JSONObject
+import java.util.*
 
 class PublicationsAdapter(
     private val parent: PublicationsActivity,
@@ -101,32 +103,47 @@ class PublicationsAdapter(
 
     fun deleteSelectedFile(username: String, hashedPassword: String, pubID: Int) {
         val publication = pubsDataSet[pubID]
+        val token = createDeleteFileToken()
         var deleteLink = publication.deleteLink
         deleteLink ?: return
         deleteLink =
-            "https://10.0.2.2" + deleteLink.substring(28) + "&username=$username&password=$hashedPassword"
-        val stringRequest =
-            StringRequest(Request.Method.GET, deleteLink, Response.Listener<String> {
+            "https://10.0.2.2$deleteLink?username=$username"
+        val stringRequest = object :
+            StringRequest(Method.GET, deleteLink, Response.Listener<String> {
                 publication.filename = null
                 publication.deleteLink = null
                 publication.downloadLink = null
                 notifyItemChanged(pubID)
             }, Response.ErrorListener {
                 makeErrorToast()
-            })
+            }) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer $token"
+                return headers
+            }
+        }
         requestQueue.add(stringRequest)
     }
 
-    fun deleteSelectedPublication(username: String, hashedPassword: String, pubID: Int) {
+    fun deleteSelectedPublication(username: String, pubID: Int) {
         val id = pubsDataSet[pubID].id
+        val token = createDeletePubToken(id.toString())
         val url =
-            "https://10.0.2.2/publications/delete/$id?username=$username&password=$hashedPassword"
-        val stringRequest = StringRequest(Request.Method.GET, url, Response.Listener<String> {
-            pubsDataSet.removeAt(pubID)
-            notifyDataSetChanged()
-        }, Response.ErrorListener {
-            makeErrorToast()
-        })
+            "https://10.0.2.2/publications/delete/$id?username=$username"
+        val stringRequest =
+            object : StringRequest(Method.GET, url, Response.Listener<String> {
+                pubsDataSet.removeAt(pubID)
+                notifyDataSetChanged()
+            }, Response.ErrorListener {
+                makeErrorToast()
+            }) {
+                override fun getHeaders(): MutableMap<String, String> {
+                    val headers = HashMap<String, String>()
+                    headers["Authorization"] = "Bearer $token"
+                    return headers
+                }
+            }
         requestQueue.add(stringRequest)
     }
 
@@ -138,11 +155,12 @@ class PublicationsAdapter(
         parent.uploadFile()
     }
 
-    fun updatePublication(pub: Publication, username: String, hashedPassword: String) {
+    fun updatePublication(pub: Publication, username: String) {
         val index = pubsDataSet.indexOf(pub)
-        val url = "https://10.0.2.2/publications?username=$username&password=$hashedPassword"
-        val jsonObjectRequest =
-            JsonObjectRequest(Request.Method.GET, url, null, Response.Listener { response ->
+        val token = createListToken()
+        val url = "https://10.0.2.2/publications?username=$username"
+        val jsonObjectRequest = object :
+            JsonObjectRequest(Method.GET, url, null, Response.Listener { response ->
                 val json = JSONObject(response.toString())
                 val links = json.getString("_links")
                 val linksMap = parent.prepareMap(links)
@@ -152,7 +170,13 @@ class PublicationsAdapter(
                 notifyItemChanged(index)
             }, Response.ErrorListener {
                 makeErrorToast()
-            })
+            }) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer $token"
+                return headers
+            }
+        }
         requestQueue.add(jsonObjectRequest)
     }
 
@@ -174,5 +198,36 @@ class PublicationsAdapter(
         val pub = pubsDataSet[tappedID]
         tappedID = -1
         return pub
+    }
+
+    private fun createDeletePubToken(pubID: String): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "deletePub")
+        jwt.claim("pubID", pubID)
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
+    }
+
+    private fun createListToken(): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "listPubs")
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
+    }
+
+    private fun createDeleteFileToken(): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "deleteFile")
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
     }
 }
