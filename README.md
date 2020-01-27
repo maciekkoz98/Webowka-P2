@@ -1,4 +1,4 @@
-# ,,Projektowanie aplikacji webowych'' Project 2, Project 3, Project 4
+# ,,Projektowanie aplikacji webowych'' Project 2, Project 3, Project 4, Project 5
 
 Table of contents:  
 - [Project 2](#project-2)  
@@ -80,6 +80,6 @@ Because of masive changes in the client's authentication Android app is not able
 App needs also some refactoring as it's not build with [Best practices](https://developer.android.com/guide/components/activities/activity-lifecycle)  
 
 ## Project 5
-This project containes improvemnts and fixes.  
+This project containes improvements and fixes.  
 Android client now works! To login please use: login: `jack@pw.edu.pl` password: `gwiazdor`  
 To login to the web client: login `jack@pw.edu.pl` password: `Gwiazdor!`  
