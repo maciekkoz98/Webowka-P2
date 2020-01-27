@@ -4,6 +4,7 @@ Table of contents:
 - [Project 2](#project-2)  
 - [Project 3](#project-3)  
 - [Project 4](#project-4)  
+- [Project 5](#project-5)
 
 
 ## Project 2
@@ -77,3 +78,8 @@ Included licence is taken from there.
 #### Android Client
 Because of masive changes in the client's authentication Android app is not able to be authenticated properly. This app is not working now.  
 App needs also some refactoring as it's not build with [Best practices](https://developer.android.com/guide/components/activities/activity-lifecycle)  
+
+## Project 5
+This project containes improvemnts and fixes.  
+Android client now works! To login please use: login: `jack@pw.edu.pl` password: `gwiazdor`  
+To login to the web client: login `jack@pw.edu.pl` password: `Gwiazdor!`  
