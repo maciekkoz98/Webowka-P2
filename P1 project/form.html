@@ -1,0 +1,58 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <title>Formularz</title>
+    <link href="styles/form.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Krub&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <meta charset="utf-8">
+</head>
+
+
+
+<body>
+    <h1>
+        Formularz rejestracyjny
+    </h1>
+
+    <script src="scripts/script.js"></script>
+
+    <form id="form" action="https://pi.iem.pw.edu.pl/register" method="POST" enctype="multipart/form-data">
+
+        <label class="light" for="firstname">Imię:</label>
+        <input type="text" name="firstname" />
+
+        <label class="ligth" for="lastname">Nazwisko:</label>
+        <input type="text" name="lastname" />
+
+        <label class="light" for="login">Login:</label>
+        <input type="text" name="login" />
+
+        <label class="light" for="password">Hasło:</label>
+        <input type="password" name="password" />
+
+        <label class="light" for="password2">Powtórz hasło:</label>
+        <input type="password" name="password2" />
+
+        <label class="light" for="birthdate">Data urodzin:</label>
+        <input type="text" name="birthdate" placeholder="RRRR-MM-DD" />
+
+        <label class="light" for="pesel">PESEL:</label>
+        <input type="text" name="pesel" />
+
+        <div class="sexDiv">
+            <label class="light" for="sexF">Płeć:</label>
+            <input type="radio" name="sex" value="F" id="female" /><label class="ligth">kobieta</label>
+            <input type="radio" name="sex" value="M" id="male" /><label class="light" id="maleLabel">mężczyzna</label>
+        </div>
+
+        <label class="light" for="file">Dodaj zdjęcie:</label>
+        <input type="file" name="photo" />
+
+        <br>
+        <input type="submit" name="submitButton" />
+    </form>
+</body>
+
+</html>

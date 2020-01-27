@@ -1,10 +1,15 @@
 # ,,Projektowanie aplikacji webowych'' Project 2, Project 3, Project 4, Project 5
 
 Table of contents:  
+- [Project 1](#project-1)
 - [Project 2](#project-2)  
 - [Project 3](#project-3)  
 - [Project 4](#project-4)  
 - [Project 5](#project-5)
+
+
+## Project 1
+Project 1 is a registration form with validation written in Java Script. Please go to the folder `P1 project` in order to getthe info how to use it.  
 
 
 ## Project 2
