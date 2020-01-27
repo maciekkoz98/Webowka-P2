@@ -15,7 +15,6 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.example.androidclient.R
@@ -27,7 +26,6 @@ import java.util.*
 import kotlin.collections.HashMap
 
 const val LOGIN = "com.example.androidclient.ui.login.LOGIN"
-const val PASSWORD = "com.example.androidclient.ui.login.PASSWORD"
 const val JSON = "filesapi.company.com.JSON"
 
 class LoginActivity : AppCompatActivity() {
@@ -111,12 +109,11 @@ class LoginActivity : AppCompatActivity() {
 
     private fun updateUiWithUser(model: LoggedInUserView): Boolean {
         val username = model.username
-        val hashedPassword = model.hashedPassword
-        getJSON(username, hashedPassword)
+        getJSON(username)
         return false
     }
 
-    private fun getJSON(username: String, hashedPassword: String) {
+    private fun getJSON(username: String) {
         val loading = findViewById<ProgressBar>(R.id.loading)
         loading.visibility = View.VISIBLE
 
@@ -124,15 +121,14 @@ class LoginActivity : AppCompatActivity() {
             RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
 
-        val token = createListToken();
+        val token = createListToken()
         val url = "https://10.0.2.2/publications?username=$username"
         val jsonObjectRequest = object :
-            JsonObjectRequest(Request.Method.GET, url, null, Response.Listener { response ->
+            JsonObjectRequest(Method.GET, url, null, Response.Listener { response ->
                 loading.visibility = View.GONE
                 val pubsJSON = response.toString()
                 val intent = Intent(this, PublicationsActivity::class.java).apply {
                     putExtra(LOGIN, username)
-                    putExtra(PASSWORD, hashedPassword)
                     putExtra(JSON, pubsJSON)
                 }
                 startActivity(intent)

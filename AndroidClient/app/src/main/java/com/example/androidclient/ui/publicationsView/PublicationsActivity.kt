@@ -27,7 +27,6 @@ import com.example.androidclient.ui.addPublicationView.AddPublicationActivity
 import com.example.androidclient.ui.login.JSON
 import com.example.androidclient.ui.login.LOGIN
 import com.example.androidclient.ui.login.LoginActivity
-import com.example.androidclient.ui.login.PASSWORD
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import kotlinx.android.synthetic.main.activity_pubs.*
@@ -45,7 +44,6 @@ class PublicationsActivity : AppCompatActivity() {
     private lateinit var viewManager: RecyclerView.LayoutManager
     private lateinit var requestQueue: RequestQueue
     private lateinit var username: String
-    private lateinit var hashedPassword: String
     private lateinit var menuActionModeCallback: MenuActionModeCallback
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,7 +54,6 @@ class PublicationsActivity : AppCompatActivity() {
             RequestQueueSingleton.getInstance(this.applicationContext)
                 .requestQueue
         username = "jack@pw.edu.pl"
-        hashedPassword = "85f293f02afec08cc90ec9b9501ff532c8c46c094850516700b5e8bd95bb570c"
         val json = intent.getStringExtra(JSON)
         if (json == null) {
             getJSONFromAPI(username)
@@ -67,7 +64,6 @@ class PublicationsActivity : AppCompatActivity() {
         fab.setOnClickListener {
             val intent = Intent(this, AddPublicationActivity::class.java).apply {
                 putExtra(LOGIN, username)
-                putExtra(PASSWORD, hashedPassword)
                 putExtra(JSON, json)
             }
             startActivity(intent)
@@ -164,7 +160,6 @@ class PublicationsActivity : AppCompatActivity() {
                 null,
                 viewAdapter,
                 username,
-                hashedPassword,
                 getString(R.string.selected)
             )
         } else {
@@ -172,7 +167,6 @@ class PublicationsActivity : AppCompatActivity() {
                 null,
                 viewAdapter,
                 username,
-                hashedPassword,
                 getString(R.string.selected)
             )
         }
@@ -287,7 +281,6 @@ class PublicationsActivity : AppCompatActivity() {
     private fun prepareParamsMap(): Map<String, String> {
         val map = HashMap<String, String>()
         map["username"] = username
-        map["password"] = hashedPassword
         return map
     }
 

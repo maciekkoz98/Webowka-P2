@@ -10,7 +10,6 @@ class WithFileActionModeCallback(
     private var actionMode: ActionMode?,
     private val viewAdapter: PublicationsAdapter,
     private val username: String,
-    private val hashedPassword: String,
     private val title: String
 ) : ActionMode.Callback, MenuActionModeCallback {
 

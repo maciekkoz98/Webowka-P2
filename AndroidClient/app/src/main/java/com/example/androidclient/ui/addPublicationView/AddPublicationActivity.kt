@@ -5,14 +5,12 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.example.androidclient.R
 import com.example.androidclient.data.RequestQueueSingleton
 import com.example.androidclient.ui.login.JSON
 import com.example.androidclient.ui.login.LOGIN
-import com.example.androidclient.ui.login.PASSWORD
 import com.example.androidclient.ui.publicationsView.PublicationsActivity
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
@@ -23,7 +21,6 @@ import kotlin.collections.HashMap
 class AddPublicationActivity : AppCompatActivity() {
 
     private var username: String? = null
-    private var password: String? = null
     private var json: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +28,6 @@ class AddPublicationActivity : AppCompatActivity() {
         setContentView(R.layout.activity_add_publication)
 
         username = intent.getStringExtra(LOGIN)
-        password = intent.getStringExtra(PASSWORD)
         json = intent.getStringExtra(JSON)
     }
 
@@ -63,7 +59,6 @@ class AddPublicationActivity : AppCompatActivity() {
         pubsJSON.put("publisher", publisher)
         pubsJSON.put("year", year)
         pubsJSON.put("username", username)
-        pubsJSON.put("password", password)
         return pubsJSON
     }
 
@@ -73,7 +68,8 @@ class AddPublicationActivity : AppCompatActivity() {
                 .requestQueue
         val url = "https://10.0.2.2/publications"
         val jsonObjectRequest =
-            object : JsonObjectRequest(Request.Method.POST, url, jsonObject, null,
+            object : JsonObjectRequest(
+                Method.POST, url, jsonObject, null,
                 Response.ErrorListener {}) {
                 override fun getHeaders(): MutableMap<String, String> {
                     val headers = HashMap<String, String>()
