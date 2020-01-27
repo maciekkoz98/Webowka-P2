@@ -18,7 +18,7 @@ class WithFileActionModeCallback(
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_delete_file -> {
-                viewAdapter.deleteSelectedFile(username, hashedPassword, viewAdapter.selectedID)
+                viewAdapter.deleteSelectedFile(username, viewAdapter.selectedID)
                 mode.finish()
                 return true
             }

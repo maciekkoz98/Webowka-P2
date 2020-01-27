@@ -101,7 +101,7 @@ class PublicationsAdapter(
 
     override fun getItemCount() = pubsDataSet.size
 
-    fun deleteSelectedFile(username: String, hashedPassword: String, pubID: Int) {
+    fun deleteSelectedFile(username: String, pubID: Int) {
         val publication = pubsDataSet[pubID]
         val token = createDeleteFileToken()
         var deleteLink = publication.deleteLink

@@ -262,7 +262,6 @@ class PublicationsActivity : AppCompatActivity() {
                 val fileBytes = ByteArray(fileStream!!.available())
                 fileStream.read(fileBytes)
                 fileStream.close()
-                val token = createFileUploadToken(filename!!)
                 val publication = viewAdapter.getTappedPublication()
                 val url = "https://10.0.2.2/publications/${publication.id}"
                 val request =
@@ -276,9 +275,9 @@ class PublicationsActivity : AppCompatActivity() {
                             "$internetError\n$dataSync",
                             Toast.LENGTH_LONG
                         ).show()
-                    })
+                    }, filename!!)
                 request.paramsMap = prepareParamsMap()
-                request.dataMap = prepareDataMap(filename!!, fileBytes)
+                request.dataMap = prepareDataMap(filename, fileBytes)
                 requestQueue.add(request)
             }
         }
@@ -336,16 +335,5 @@ class PublicationsActivity : AppCompatActivity() {
         startActivity(intent)
         setResult(Activity.RESULT_OK)
         finish()
-    }
-
-    private fun createFileUploadToken(filename: String): String {
-        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
-        jwt.claim("action", "addFile")
-        jwt.claim("filename", filename)
-        val date = Date().time + 30000
-        jwt.setExpiration(Date(date))
-        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
-        jwt.signWith(key)
-        return jwt.compact()
     }
 }

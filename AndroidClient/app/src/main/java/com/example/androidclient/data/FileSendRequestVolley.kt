@@ -5,13 +5,17 @@ import com.android.volley.ParseError
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.HttpHeaderParser
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
 import java.io.*
+import java.util.*
 import kotlin.math.min
 
 class FileSendRequestVolley(
     url: String,
     private val responseListener: Response.Listener<NetworkResponse>,
-    errorListener: Response.ErrorListener
+    errorListener: Response.ErrorListener,
+    private val fileName: String
 ) : Request<NetworkResponse>(Method.POST, url, errorListener) {
 
     private val lineEnd = "\r\n"
@@ -27,6 +31,24 @@ class FileSendRequestVolley(
         } catch (e: Exception) {
             Response.error(ParseError(e))
         }
+    }
+
+    override fun getHeaders(): MutableMap<String, String> {
+        val headers = HashMap<String, String>()
+        val token = createFileUploadToken(fileName)
+        headers["Authorization"] = "Bearer $token"
+        return headers
+    }
+
+    private fun createFileUploadToken(filename: String): String {
+        val jwt = Jwts.builder().setIssuer("filesapi.company.com")
+        jwt.claim("action", "addFile")
+        jwt.claim("filename", filename)
+        val date = Date().time + 30000
+        jwt.setExpiration(Date(date))
+        val key = Keys.hmacShaKeyFor("sekretnehaslosekretnehaslosekretnehaslo".toByteArray())
+        jwt.signWith(key)
+        return jwt.compact()
     }
 
     override fun deliverResponse(response: NetworkResponse?) {
