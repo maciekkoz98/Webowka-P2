@@ -1,4 +1,4 @@
-# ,,Projektowanie aplikacji webowych'' Project 2, Project 3, Project 4, Project 5
+# ,,Projektowanie aplikacji webowych'' Project 1, Project 2, Project 3, Project 4, Project 5
 
 Table of contents:  
 - [Project 1](#project-1)
