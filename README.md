@@ -9,7 +9,7 @@ Table of contents:
 
 
 ## Project 1
-Project 1 is a registration form with validation written in Java Script. Please go to the folder `P1 project` in order to getthe info how to use it.  
+Project 1 is a registration form with validation written in Java Script. Please go to the folder `P1 project` in order to get the info how to use it.  
 
 
 ## Project 2
